@@ -20,6 +20,8 @@ include(joinpath("lib", "io.jl"))
 # TODO export
 
 include(joinpath("datasets", "sources.jl"))
+export SimpleSDMSource
+
 include(joinpath("datasets", "download_layer.jl"))
 export EarthEnv, WorldClim, BioClim
 
