@@ -49,6 +49,7 @@ p[left=left, right=right, bottom=bottom, top=top]
 ~~~
 
 If the layer is of the `SimpleSDMResponse` type, it is possible to write to it:
+
 ~~~ julia
 p[-74.3, 17.65] = 1.4
 ~~~
