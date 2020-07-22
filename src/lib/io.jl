@@ -14,3 +14,9 @@ function raster(::Type{IT}, source::ST, file; left=nothing, right=nothing, botto
     top = isnothing(top) ? maximum(latitudes(ST)) : top
     return geotiff(IT, ST, file; left=left, right=right, bottom=bottom, top=top)
 end
+
+function save(file, layer::T) where {T <: SimpleSDMLayer}
+    # TODO write bounding box as first rows
+    # TODO write values as a grid
+    # TODO write to a file
+end
