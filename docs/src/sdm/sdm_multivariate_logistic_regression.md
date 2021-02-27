@@ -121,7 +121,7 @@ chain = mapreduce(c -> sample(mv_logit(features, labels, 1), HMC(0.03, 10), 1000
     1
 )
 end
-
+```
 
 and define a function to build a prediction layer based on our its sample
 
