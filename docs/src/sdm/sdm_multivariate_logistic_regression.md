@@ -20,15 +20,13 @@ North America.
 ```@example mvlogit
 getData(tx::GBIFTaxon; country="US") = begin
     occData = occurrences(tx, "hasCoordinate" => true, "country" => country)
-    while (length(occData)< 1000)
+    while (length(occData)< size(occData))
         occurrences!(occData)
-        @info length(occData)
     end
     occData
 end
 
-occurrence = getData(taxon("Picea pungens"))    
-
+occurrence = getData(taxon("Carnegiea gigantea"))    
 plot(occurrence)
 ```
 
@@ -38,10 +36,11 @@ Now we load climate data from worldclim.
 
 boundingBox(occData) = begin
     left, right = extrema([o.longitude for o in occData]) .+ (-2, 2)
-    bottom, top = extrema([o.latitude for o in occData])  .+ (-5, 5)
+    bottom, top = extrema([o.latitude for o in occData])  .+ (-2, 2)
     (left=left, right=right, bottom=bottom, top=top)
 end
 bounds = boundingBox(occupancy)
+
 
 environment = worldclim(collect(1:19); bounds...)
 for i in 1:length(environment) rescale!(environment[i], (0.,1.)) end
@@ -116,16 +115,19 @@ We can then sample from this model
 
 ```@example mvlogit
 
-chain = mapreduce(c -> sample(mv_logit(features, labels, 1), HMC(0.03, 10), 1000),
-    chainscat,
-    1
-)
-end
+chain = sample(mv_logit(features, labels, 1), HMC(0.01, 10), 1500)
+plot(chain)
 ```
 
 and define a function to build a prediction layer based on our its sample
 
 ```@example mvlogit
+
+function logit(α, β, features)
+    v = α + (β ⋅ features)
+    p = logistic(v)
+end
+
 function predict(chain, environment)
     predictedProb = similar(environment[1])
     numFeatures = length(environment)
@@ -151,7 +153,7 @@ predictionLayer = predict(chain, environment)
 and now we plot
 
 ```@example 
-plot(predictionLayer, frame=:box, aspectratio=1, xlim=(-125,-90))
-scatter!(coordinates, c=:white, alpha=0.1, legend=nothing)
+pl = plot(predictionLayer, aspectratio=1, size=(700,1000), xlim=(bounds.left, bounds.right))
+scatter!(coords, c=:white, alpha=0.2, legend=nothing)
 
 ```
