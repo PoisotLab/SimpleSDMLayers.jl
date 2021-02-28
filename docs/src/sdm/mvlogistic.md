@@ -12,41 +12,43 @@ using Turing
 using StatsFuns: logistic
 ```
 
-We can get some occurrences for the taxon of interest, _Picea pungens_ or the Blue Spruce,
-a conifer native to the Rocky Mountains, although it has been introduced elsewhere in northeastern
-North America.
-
+We can get some occurrences for the taxon of interest, _Picea pungens_ or the
+Blue Spruce, a conifer native to the Rocky Mountains, although it has been
+introduced elsewhere in northeastern North America.
 
 ```@example mvlogit
-getData(tx::GBIFTaxon; country="US") = begin
-    occData = occurrences(tx, "hasCoordinate" => true, "country" => country)
-    while (length(occData)< size(occData))
-        occurrences!(occData)
-    end
-    occData
+records = occurrences(
+    taxon("Carnegiea gigantea"),
+    "hasCoordinate" => true,
+    "country" => "US"
+)
+
+while length(records) < size(records)
+    occurrences!(records)
 end
 
-occurrence = getData(taxon("Carnegiea gigantea"))    
-plot(occurrence)
+scatter(longitudes(records), latitudes(records), lab="")
 ```
 
 Now we load climate data from worldclim.
 
 ```@example mvlogit
-
-boundingBox(occData) = begin
-    left, right = extrema([o.longitude for o in occData]) .+ (-2, 2)
-    bottom, top = extrema([o.latitude for o in occData])  .+ (-2, 2)
-    (left=left, right=right, bottom=bottom, top=top)
+function boundingbox(records::GBIFRecords)
+    left, right = extrema(longitudes(records)) .+ (-2.0, 2.0)
+    bottom, top = extrema(latitudes(records))  .+ (-2.0, 2.0)
+    return (left=left, right=right, bottom=bottom, top=top)
 end
-bounds = boundingBox(occupancy)
 
+bounds = boundingbox(records)
 
-environment = worldclim(collect(1:19); bounds...)
-for i in 1:length(environment) rescale!(environment[i], (0.,1.)) end
+predictors = worldclim(collect(1:19); bounds...)
 
-plot(environment[1])
-scatter!(occupancy)
+for i in 1:length(environment)
+    rescale!(environment[i], (0.,1.))
+end
+
+plot(predictors[1])
+scatter!(longitudes(records), latitudes(records), lab="")
 ```
 
 The first thing we want to do is create a `SimpleSDMPredictor` layer that is
