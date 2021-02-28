@@ -18,16 +18,18 @@ introduced elsewhere in northeastern North America.
 
 ```@example mvlogit
 records = occurrences(
-    taxon("Carnegiea gigantea"),
+    taxon("Picea pungens"),
     "hasCoordinate" => true,
-    "country" => "US"
+    "country" => "US",
+    "decimalLatitude" => (30, 50),
+    "limit" => 100
 )
 
-while length(records) < size(records)
+while length(records) < min(2000, size(records))
     occurrences!(records)
 end
 
-scatter(longitudes(records), latitudes(records), lab="")
+scatter(longitudes(records), latitudes(records), lab="", frame=:box, ratio=1)
 ```
 
 Now we load climate data from worldclim.
@@ -39,61 +41,24 @@ function boundingbox(records::GBIFRecords)
     return (left=left, right=right, bottom=bottom, top=top)
 end
 
-bounds = boundingbox(records)
+predictors = worldclim(1:19; boundingbox(records)...)
 
-predictors = worldclim(collect(1:19); bounds...)
-
-for i in 1:length(environment)
-    rescale!(environment[i], (0.,1.))
+for predictor in predictors
+    rescale!(predictor, (0.,1.))
 end
 
-plot(predictors[1])
-scatter!(longitudes(records), latitudes(records), lab="")
+plot(predictors[1], c=:Greens, frame=:box)
+scatter!(longitudes(records), latitudes(records), lab="", msw=0.0, c=:orange, ms=3)
 ```
 
-The first thing we want to do is create a `SimpleSDMPredictor` layer that is
-$1$ where there is a record of occurrence and $0$ elsewhere.
+The first thing we want to do is create a `SimpleSDMPredictor` layer that is $1$
+where there is a record of occurrence and $0$ elsewhere, and 
 
-```@example mvlogit
-getOccupancyLayer(envLayer::SimpleSDMPredictor, occupancy) = begin
-    latticeLats = latitudes(envLayer)
-    latticeLongs = longitudes(envLayer)
-
-    occLayer = similar(envLayer)
-    for o in occupancy
-        long,lat = longitude(o), latitude(o)
-        occLayer[long,lat] = convert(eltype(occLayer), 1)
-    end
-    occLayer
-end
-
-```
 Now we need to construct a set of `features` and `labels` to use Flux.
 
 ```@example mvlogit
-function buildFeaturesMatrix(environment::LT, occurrence::OT) where {LT <: AbstractVector{T} where T <: SimpleSDMPredictor, OT <: GBIFRecords}
-    xDim, yDim = size(environment[1])
-    numberSpatialPoints = xDim*yDim
-    numFeatures = length(environment)
-        
-    featuresMatrix = zeros(numberSpatialPoints, numFeatures)
-    labels = [false for i in 1:numberSpatialPoints]
-    occupancyLayer = getOccupancyLayer(environment[1], occurrence)
-    
-    cursor = 1
-    for pt in 1:numberSpatialPoints
-        if (!isnothing(environment[1][pt] ))
-            for f in 1:numFeatures
-                featuresMatrix[cursor, f] = environment[f][pt]  
-                labels[cursor] = occupancyLayer[pt]
-            end
-            cursor += 1
-        end
-    end
-    return (featuresMatrix[1:cursor, :], labels[1:cursor])
-end
-
-features, labels = buildFeaturesMatrix(environment, occupancy)
+labels = Float64.(collect(mask(predictors[1], records)))
+features = hcat([collect(predictor) for predictor in predictors]...)
 ```
 
 Now we define a model in `Flux`, which is as simple as
