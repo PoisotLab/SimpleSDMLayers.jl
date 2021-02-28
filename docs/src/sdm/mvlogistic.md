@@ -31,6 +31,7 @@ scatter(longitudes(records), latitudes(records), lab="", frame=:box, ratio=1)
 Now we load climate data from worldclim.
 
 ```@example mvlogit
+<<<<<<< HEAD
 
 function boundingbox(records::GBIFRecords)
     left, right = extrema(longitudes(records)) .+ (-0.5, 0.5)
@@ -39,6 +40,14 @@ function boundingbox(records::GBIFRecords)
 end
 
 
+=======
+function boundingbox(records::GBIFRecords)
+    left, right = extrema(longitudes(records)) .+ (-2.0, 2.0)
+    bottom, top = extrema(latitudes(records))  .+ (-2.0, 2.0)
+    return (left=left, right=right, bottom=bottom, top=top)
+end
+
+>>>>>>> f43b95047d7fb5da4fc61f275417b3072c037bb4
 predictors = worldclim(1:19; boundingbox(records)...)
 
 for predictor in predictors
@@ -50,18 +59,38 @@ scatter!(longitudes(records), latitudes(records), lab="", msw=0.0, c=:orange, ms
 ```
 
 Now we need to construct a set of `features` and `labels` to use `Turing`.
+<<<<<<< HEAD
 
 This creates a `n` by `m` matrix called `features`, where each row 
 corresponds to a point in the raster, and contains the value of each predictor. We also need a vector `labels` of length `n`, which correspond to each point in the lattice and contains `1` if there 
 is an occurrence record and that point, and `0` otherwise. 
+=======
+This creates a `n` by `m` matrix called `features`, where each row corresponds
+to a point in the raster, and contains the value of each predictor. We also need
+a vector `labels` of length `n`, which correspond to each point in the lattice
+and contains `1` if there is an occurrence record and that point, and `0`
+otherwise.
+>>>>>>> f43b95047d7fb5da4fc61f275417b3072c037bb4
 
 ```@example mvlogit
 labels = Float64.(collect(mask(predictors[1], records)))
 features = hcat([collect(predictor) for predictor in predictors]...)
+<<<<<<< HEAD
 ```
 
 Now we define `Turing` model to do multivariate logistic regression. 
 
+=======
+
+negatives = sample(1:size(features[labels.<1,:],1), 2000, replace=false)
+positives = findall(labels.>0)
+
+labels = labels[vcat(negatives, positives)]
+features = features[vcat(negatives, positives),:]
+```
+
+Now we define `Turing` model to do multivariate logistic regression.
+>>>>>>> f43b95047d7fb5da4fc61f275417b3072c037bb4
 
 ```@example mvlogit
 @model mv_logit(features, labels, σ) = begin
@@ -77,6 +106,7 @@ Now we define `Turing` model to do multivariate logistic regression.
 end;
 ```
 
+<<<<<<< HEAD
 Not sure how much in detail I should explain how mvlogit works or assume a base familiarity and link to other resources.
 
 Effects, represented as the vector $\beta$, are sampled
@@ -96,6 +126,7 @@ analysis, checking for covariance of predictors and so on.
 We can then sample from this model. This line creates a single
 Markov chain which runs using Hamilitonian Monte Carlo (`HMC`, see [todo resource on HMC]()) to sample a posterior estimate of our parameters. Here we use `0.01` as the step size as it resulted in
 few divergent transitions. 
+
 
 ```@example mvlogit
 chain = sample(mv_logit(features, labels, 1.0), HMC(0.01, 10), 1500)
@@ -132,7 +163,8 @@ prediction = predict(chain, predictors)
 
 and now we plot our SDM
 
-```@example 
+
+```@example
 plot(rescale(prediction, collect(0.0:0.05:1.0)), c=:alpine, frame=:box)
 scatter!(longitudes(records), latitudes(records), lab="", msw=0.0, c=:black, ms=2, alpha=0.2)
 ```
