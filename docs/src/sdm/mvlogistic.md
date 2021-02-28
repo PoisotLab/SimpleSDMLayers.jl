@@ -48,10 +48,11 @@ scatter!(longitudes(records), latitudes(records), lab="", msw=0.0, c=:orange, ms
 ```
 
 Now we need to construct a set of `features` and `labels` to use `Turing`.
-
-This creates a `n` by `m` matrix called `features`, where each row 
-corresponds to a point in the raster, and contains the value of each predictor. We also need a vector `labels` of length `n`, which correspond to each point in the lattice and contains `1` if there 
-is an occurrence record and that point, and `0` otherwise. 
+This creates a `n` by `m` matrix called `features`, where each row corresponds
+to a point in the raster, and contains the value of each predictor. We also need
+a vector `labels` of length `n`, which correspond to each point in the lattice
+and contains `1` if there is an occurrence record and that point, and `0`
+otherwise.
 
 ```@example mvlogit
 labels = Float64.(collect(mask(predictors[1], records)))
@@ -64,25 +65,7 @@ labels = labels[vcat(negatives, positives)]
 features = features[vcat(negatives, positives),:]
 ```
 
-Now we define `Turing` model to do multivariate logistic regression. 
-
-Not sure how much in detail I should explain how mvlogit works or assume a base familiarity and link to other resources.
-
-Effects, represented as the vector $\beta$, are sampled
-from a multivariate normal prior with equal variance and 
-no covariance in effects.
-
-The predicted state is computed as 
-
-$$\text{logit}(y) = \alpha + \sum_i \Beta_i x_i$$
-
-One could also choose to sample from a set of priors on matrices $\textbf{B}$ 
-
-
-
-For the sake of example we cut
-out a lot of the fine tuning one would do in an actual 
-analysis, checking for covariance of predictors and so on.
+Now we define `Turing` model to do multivariate logistic regression.
 
 ```@example mvlogit
 @model mv_logit(features, labels, σ) = begin
@@ -98,9 +81,25 @@ analysis, checking for covariance of predictors and so on.
 end;
 ```
 
-We can then sample from this model. This line creates a single
-Markov chain which runs using Hamilitonian Monte Carlo (`HMC`, see [todo resource on HMC]()) to sample a posterior estimate of our parameters. Here we use `0.01` as the step size as it resulted in
-few divergent transitions. 
+Not sure how much in detail I should explain how mvlogit works or assume a base
+familiarity and link to other resources.
+
+Effects, represented as the vector $\beta$, are sampled from a multivariate
+normal prior with equal variance and no covariance in effects. The predicted
+state is computed as
+
+$$\text{logit}(y) = \alpha + \sum_i \Beta_i x_i$$
+
+One could also choose to sample from a set of priors on matrices $\textbf{B}$,
+and let the data speak for itself regarding the interaction effects $B_ij$. For
+the sake of example we cut out a lot of the fine tuning one would do in an
+actual analysis, checking for covariance of predictors and so on.
+
+
+We can then sample from this model. This line creates a single Markov chain
+which runs using Hamilitonian Monte Carlo (`HMC`, see [todo resource on HMC]())
+to sample a posterior estimate of our parameters. Here we use `0.01` as the step
+size as it resulted in few divergent transitions.
 
 ```@example mvlogit
 chain = sample(mv_logit(features, labels, 1.0), HMC(0.01, 10), 1500)
@@ -137,7 +136,7 @@ prediction = predict(chain, predictors)
 
 and now we plot our SDM
 
-```@example 
+```@example
 plot(rescale(prediction, collect(0.0:0.05:1.0)), c=:alpine, frame=:box)
 scatter!(longitudes(records), latitudes(records), lab="", msw=0.0, c=:black, ms=2, alpha=0.2)
 ```
