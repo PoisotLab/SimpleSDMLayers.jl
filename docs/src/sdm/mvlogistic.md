@@ -15,21 +15,15 @@ using StatsBase
 ```
 
 We can get some occurrences for the taxon of interest, _Picea pungens_ or the
-Blue Spruce, a conifer native to the Rocky Mountains, although it has been
-introduced elsewhere in northeastern North America.
+Corsican nuthatch, a threatened bird native to Corsica.
 
 ```@example mvlogit
 records = occurrences(
-    taxon("Picea pungens"),
+    taxon("Sitta whiteheadi"),
     "hasCoordinate" => true,
-    "country" => "US",
-    "decimalLatitude" => (30, 50),
-    "limit" => 100
+    "limit" => 500
 )
 
-while length(records) < min(2000, size(records))
-    occurrences!(records)
-end
 
 scatter(longitudes(records), latitudes(records), lab="", frame=:box, ratio=1)
 ```
@@ -53,10 +47,11 @@ plot(predictors[1], c=:Greens, frame=:box)
 scatter!(longitudes(records), latitudes(records), lab="", msw=0.0, c=:orange, ms=3)
 ```
 
-The first thing we want to do is create a `SimpleSDMPredictor` layer that is $1$
-where there is a record of occurrence and $0$ elsewhere, and 
+Now we need to construct a set of `features` and `labels` to use `Turing`.
 
-Now we need to construct a set of `features` and `labels` to use Flux.
+This creates a `n` by `m` matrix called `features`, where each row 
+corresponds to a point in the raster, and contains the value of each predictor. We also need a vector `labels` of length `n`, which correspond to each point in the lattice and contains `1` if there 
+is an occurrence record and that point, and `0` otherwise. 
 
 ```@example mvlogit
 labels = Float64.(collect(mask(predictors[1], records)))
@@ -69,7 +64,25 @@ labels = labels[vcat(negatives, positives)]
 features = features[vcat(negatives, positives),:]
 ```
 
-Now we define a model in `Turing`, which is as simple as
+Now we define `Turing` model to do multivariate logistic regression. 
+
+Not sure how much in detail I should explain how mvlogit works or assume a base familiarity and link to other resources.
+
+Effects, represented as the vector $\beta$, are sampled
+from a multivariate normal prior with equal variance and 
+no covariance in effects.
+
+The predicted state is computed as 
+
+$$\text{logit}(y) = \alpha + \sum_i \Beta_i x_i$$
+
+One could also choose to sample from a set of priors on matrices $\textbf{B}$ 
+
+
+
+For the sake of example we cut
+out a lot of the fine tuning one would do in an actual 
+analysis, checking for covariance of predictors and so on.
 
 ```@example mvlogit
 @model mv_logit(features, labels, σ) = begin
@@ -85,13 +98,18 @@ Now we define a model in `Turing`, which is as simple as
 end;
 ```
 
-We can then sample from this model 
+We can then sample from this model. This line creates a single
+Markov chain which runs using Hamilitonian Monte Carlo (`HMC`, see [todo resource on HMC]()) to sample a posterior estimate of our parameters. Here we use `0.01` as the step size as it resulted in
+few divergent transitions. 
 
 ```@example mvlogit
 chain = sample(mv_logit(features, labels, 1.0), HMC(0.01, 10), 1500)
 ```
 
-and define a function to build a prediction layer based on its sample
+Now that we have a posterior estimate for the parameters of our model,
+we define a function to build a prediction layer based on its sample.
+
+There is almost certaintly a more `SimpleSDMLayers`-y way to do this.
 
 ```@example mvlogit
 logit(α, β, features) = logistic(α + (β ⋅ features))
@@ -107,7 +125,7 @@ function predict(chain, predictors)
         local_environment = [predictors[j][i] for j in 1:featurecount]
 
         if (!in(nothing, local_environment))
-            prob::eltype(prediction) = (logit(α, βvec, local_environment))
+            prob::eltype(prediction) = logit(α, βvec, local_environment)
             prediction[i] = prob
         end
     end
@@ -117,7 +135,7 @@ end
 prediction = predict(chain, predictors)
 ```
 
-and now we plot
+and now we plot our SDM
 
 ```@example 
 plot(rescale(prediction, collect(0.0:0.05:1.0)), c=:alpine, frame=:box)
