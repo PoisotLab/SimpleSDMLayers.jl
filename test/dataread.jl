@@ -4,7 +4,7 @@ using Test
 using RasterDataSources
 
 file = joinpath(dirname(pathof(SimpleSDMLayers)), "..", "data", "connectivity.tiff")
-struct MyConnectivityMap <: RasterDataSources.RasterDataSource end
+struct MyConnectivityMap end
 SimpleSDMLayers.latitudes(::Type{MyConnectivityMap}) = (-10.0, 10.0)
 SimpleSDMLayers.longitudes(::Type{MyConnectivityMap}) = (-20.0, 20.0)
 mp = SimpleSDMLayers.geotiff(SimpleSDMResponse, MyConnectivityMap, file)
