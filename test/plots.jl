@@ -18,7 +18,7 @@ plot(chelsa1, c=:heat, title="Temperature from CHELSA", frame=:box,
     ylabel= "Latitude")
 savefig(joinpath("gallery", "range-comparison-chelsa.png"))
 
-wc1 = SimpleSDMPredictor(WorldClim{BioClim}, [1,12], 1; left=-11.0, right=31.1, bottom=29.0, top=71.1)
+wc1 = SimpleSDMPredictor(WorldClim{BioClim}, 1; left=-11.0, right=31.1, bottom=29.0, top=71.1)
 plot(wc1, c=:heat, title="Temperature from worldclim @ 10", frame=:box,
     xlabel = "Longitude",
     ylabel= "Latitude")
