@@ -6,7 +6,10 @@ using RecipesBase
 using ZipFile
 using Requires
 using Statistics
+
+# Data sources
 using RasterDataSources
+export WorldClim, CHELSA, EarthEnv, AWAP, ALWB, BioClim, Climate, Weather, LandCover, HabitatHeterogeneity
 
 include(joinpath("lib", "types.jl"))
 export SimpleSDMLayer, SimpleSDMResponse, SimpleSDMPredictor
