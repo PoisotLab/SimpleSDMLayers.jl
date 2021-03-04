@@ -7,7 +7,6 @@ for each layers are in the function documentation):
 
 ```@example temp
 using SimpleSDMLayers
-using RasterDataSources
 temperature = SimpleSDMPredictor(WorldClim{BioClim}, 1)
 ```
 
