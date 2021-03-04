@@ -1,7 +1,6 @@
 push!(LOAD_PATH, joinpath("..", "src"))
 
 using Documenter, SimpleSDMLayers
-using RasterDataSources
 using GBIF
 using Statistics
 
