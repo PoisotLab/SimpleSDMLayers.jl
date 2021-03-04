@@ -1,6 +1,11 @@
 using SimpleSDMLayers
 using Test
 
+# Set a RasterDataSources path for testing
+rdsp = get(ENV, "RASTERDATASOURCES_PATH", "rasterdata")
+(rdsp == "rasterdata") && (ENV["RASTERDATASOURCES_PATH"] = rdsp)
+isdir(rdsp) || mkdir(rdsp)
+
 global anyerrors = false
 
 tests = [

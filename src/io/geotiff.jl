@@ -25,7 +25,7 @@ function geotiff(
     right = nothing,
     bottom = nothing,
     top = nothing,
-) where {LT<:SimpleSDMLayer,ST<:SimpleSDMSource}
+) where {LT<:SimpleSDMLayer,ST<:RasterDataSources.RasterDataSource}
 
     left = isnothing(left) ? minimum(longitudes(ST)) : left
     right = isnothing(right) ? maximum(longitudes(ST)) : right

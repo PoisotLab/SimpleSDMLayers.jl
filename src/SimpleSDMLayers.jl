@@ -6,6 +6,7 @@ using RecipesBase
 using ZipFile
 using Requires
 using Statistics
+using RasterDataSources
 
 include(joinpath("lib", "types.jl"))
 export SimpleSDMLayer, SimpleSDMResponse, SimpleSDMPredictor
@@ -19,18 +20,14 @@ export latitudes, longitudes
 
 include(joinpath("lib", "iteration.jl"))
 
-include(joinpath("datasets", "sources.jl"))
-include(joinpath("datasets", "download_layer.jl"))
-export EarthEnv, WorldClim, BioClim
+# Functions to read the geotiff and ascii formats
+include(joinpath("io", "ascii.jl"))
+include(joinpath("io", "geotiff.jl"))
 
-include(joinpath("datasets", "geotiff.jl"))
-include(joinpath("datasets", "raster.jl"))
-include(joinpath("datasets", "worldclim.jl"))
-include(joinpath("datasets", "chelsa.jl"))
-include(joinpath("datasets", "landcover.jl"))
-include(joinpath("datasets", "ascii.jl"))
-export worldclim, bioclim, landcover
+# Interface with RasterDataSources as the main data provider
+include(joinpath("integrations", "RasterDataSources.jl"))
 
+# Operation on layers
 include(joinpath("operations", "coarsen.jl"))
 include(joinpath("operations", "sliding.jl"))
 include(joinpath("operations", "mask.jl"))
@@ -39,14 +36,6 @@ include(joinpath("operations", "mosaic.jl"))
 export coarsen, slidingwindow, mask, rescale!, rescale, mosaic
 
 include(joinpath("recipes", "recipes.jl"))
-
-# This next bit is about being able to change the path for raster assets
-# globally, which avoids duplication this argument across multiple functions.
-_layers_assets_path = "assets"
-function assets_path()
-    isdir(SimpleSDMLayers._layers_assets_path) || mkdir(SimpleSDMLayers._layers_assets_path)
-    return SimpleSDMLayers._layers_assets_path
-end
 
 # Fixes the export of clip when GBIF or others are loaded
 clip(::T) where {T <: SimpleSDMLayer} = nothing
@@ -61,7 +50,6 @@ function __init__()
         @info "DataFrames integration loaded"
         include(joinpath(dirname(pathof(SimpleSDMLayers)), "integrations", "DataFrames.jl"))
     end
-
 end
 
 end # module
