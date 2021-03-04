@@ -1,8 +1,15 @@
 push!(LOAD_PATH, joinpath("..", "src"))
 
 using Documenter, SimpleSDMLayers
+using RasterDataSources
 using GBIF
 using Statistics
+
+# Set a RasterDataSources path for testing
+rdsp = get(ENV, "RASTERDATASOURCES_PATH", "rasterdata")
+(rdsp == "rasterdata") && (ENV["RASTERDATASOURCES_PATH"] = rdsp)
+isdir(rdsp) || mkdir(rdsp)
+
 
 makedocs(
     sitename = "Simple SDM Layers",
