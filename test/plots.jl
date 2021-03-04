@@ -24,7 +24,7 @@ plot(wc1, c=:heat, title="Temperature from worldclim @ 10", frame=:box,
     ylabel= "Latitude")
 savefig(joinpath("gallery", "range-comparison-worldclim-10.png"))
 
-wc1 = SimpleSDMPredictor(WorldClim{BioClim}, 1; resolution="5m", left=-11.0, right=31.1, bottom=29.0, top=71.1)
+wc1 = SimpleSDMPredictor(WorldClim{BioClim}, 1; res="5m", left=-11.0, right=31.1, bottom=29.0, top=71.1)
 plot(wc1, c=:heat, title="Temperature from worldclim @ 5", frame=:box,
     xlabel = "Longitude",
     ylabel= "Latitude")
