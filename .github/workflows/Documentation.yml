@@ -21,4 +21,5 @@ jobs:
       - name: Build and deploy
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }} # For authentication with GitHub Actions token
+          RASTERDATASOURCES_PATH: "rasterdata"
         run: julia --project=docs/ docs/make.jl
