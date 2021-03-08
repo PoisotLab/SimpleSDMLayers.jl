@@ -5,6 +5,10 @@ crop it for Western Europe, and then change the resolution to aggregate the
 data. The first step is to get the worldclim layer for temperature (the codes
 for each layers are in the function documentation):
 
+```@setup temp
+ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
+```
+
 ```@example temp
 using SimpleSDMLayers
 temperature = SimpleSDMPredictor(WorldClim{BioClim}, 1)

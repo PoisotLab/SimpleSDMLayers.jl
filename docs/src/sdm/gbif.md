@@ -5,8 +5,12 @@ In this example, we will see how we can make the packages `SimpleSDMLayers` and
 will specifically plot the relationship between temperature and precipitation
 for a few occurrences of the kingfisher *Megaceryle alcyon*.
 
-```@example temp
+
+```@setup temp
 ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
+```
+
+```@example temp
 using SimpleSDMLayers
 using GBIF
 using Plots

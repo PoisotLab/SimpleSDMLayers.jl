@@ -5,8 +5,12 @@ on the EarthEnv data, and measure the variation within each pixel using
 Shannon's entropy. We will use the `mosaic` function, which is designed
 specifically for these things.
 
-```@example cons
+
+```@setup consensus
 ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
+```
+
+```@example cons
 using SimpleSDMLayers
 using Plots
 default(; frame=:box)

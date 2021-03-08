@@ -3,8 +3,11 @@
 In this example, we will write the BIOCLIM species distribution model using
 `SimpleSDMLayers.jl` and `GBIF.jl`.
 
-```@example bioclim
+```@setup bioclim
 ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
+```
+
+```@example bioclim
 using SimpleSDMLayers
 using GBIF
 using Plots
