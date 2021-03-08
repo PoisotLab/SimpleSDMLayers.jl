@@ -244,7 +244,7 @@ end
 Changes the value of a cell, or a range of cells, as indicated by their grid
 positions.
 """
-function Base.setindex!(layer::SimpleSDMResponse{T}, v::T, i...) where {T}
+function Base.setindex!(layer::SimpleSDMResponse{T}, v::Union{T,Nothing}, i...) where {T}
    typeof(v) <: eltype(layer.grid) || throw(ArgumentError("Impossible to set a value to a non-matching type"))
    layer.grid[i...] = v
 end
@@ -255,7 +255,7 @@ end
 Changes the values of the cell including the point at the requested latitude and
 longitude.
 """
-function Base.setindex!(layer::SimpleSDMResponse{T}, v::T, lon::Float64, lat::Float64) where {T}
+function Base.setindex!(layer::SimpleSDMResponse{T}, v::Union{T,Nothing}, lon::Float64, lat::Float64) where {T}
    i = _match_longitude(layer, lon)
    j = _match_latitude(layer, lat)
    layer[j,i] = v

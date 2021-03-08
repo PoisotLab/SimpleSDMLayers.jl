@@ -76,6 +76,8 @@ replace!(s1, 1 => 2, 3 => 2, 9 => nothing)
 @test s1.grid[3,1] == 2
 @test s1.grid[1,3] == 7
 @test isnothing(s1.grid[3,3])
+s1.grid[1,1] = nothing
+@test isnothing(s1.grid[1,1])
 
 s1 = SimpleSDMPredictor(collect(reshape(1:9, 3, 3)))
 @test length(s1) == 9
