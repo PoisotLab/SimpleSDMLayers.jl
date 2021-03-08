@@ -11,7 +11,7 @@ The `sanitize` keyword is used to determine whether values that are `NaN` or
 `sanitize=false` can be useful if you want to do things like finding which layer
 has the maximal value, in a context where some layers may have `nothing`.
 """
-function xmosaic(f::TF, layers::Vector{T}, ::Type{RT}; sanitize::Bool=true) where {TF <: Function, T <: SimpleSDMLayer, RT}
+function mosaic(f::TF, layers::Vector{T}, ::Type{RT}; sanitize::Bool=true) where {TF <: Function, T <: SimpleSDMLayer, RT}
 
     # Check the dimensions
     for i in 1:(length(layers)-1)
