@@ -4,7 +4,7 @@ test 1
 @recipe function plot(layer::T) where {T <: SimpleSDMLayer}
     seriestype --> :heatmap
     if get(plotattributes, :seriestype, :heatmap) in [:heatmap, :contour]
-        eltype(layer) <: AbstractFloat || throw(ArgumentError("This plot is only supported for layers with number values ($(eltype(layer)))"))
+        eltype(layer) <: AbstractFloat || throw(ArgumentError("This plot is only supported for layers with floating point values ($(eltype(layer)))"))
         aspect_ratio --> 1
         xlims --> extrema(longitudes(layer))
         ylims --> extrema(latitudes(layer))
