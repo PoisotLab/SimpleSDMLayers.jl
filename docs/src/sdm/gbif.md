@@ -6,11 +6,12 @@ will specifically plot the relationship between temperature and precipitation
 for a few occurrences of the kingfisher *Megaceryle alcyon*.
 
 ```@example temp
+ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
 using SimpleSDMLayers
 using GBIF
 using Plots
 using Statistics
-temperature, precipitation = worldclim([1,12])
+temperature, precipitation = SimpleSDMPredictor(WorldClim{BioClim}, [1,12])
 ```
 
 We can get some occurrences for the taxon of interest:

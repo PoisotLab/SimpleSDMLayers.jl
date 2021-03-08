@@ -6,6 +6,7 @@ Shannon's entropy. We will use the `mosaic` function, which is designed
 specifically for these things.
 
 ```@example cons
+ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
 using SimpleSDMLayers
 using Plots
 default(; frame=:box)

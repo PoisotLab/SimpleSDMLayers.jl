@@ -4,6 +4,7 @@ In this example, we will write the BIOCLIM species distribution model using
 `SimpleSDMLayers.jl` and `GBIF.jl`.
 
 ```@example bioclim
+ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
 using SimpleSDMLayers
 using GBIF
 using Plots
@@ -40,7 +41,7 @@ example, we will take all worldclim data, at the default 10 arc minute
 resolution:
 
 ```@example bioclim
-predictors = worldclim(1:19; left=left, right=right, bottom=bottom, top=top);
+predictors = SimpleSDMPredictor(WorldClim{BioClim}, 1:19; left=left, right=right, bottom=bottom, top=top);
 first(predictors)
 ```
 
