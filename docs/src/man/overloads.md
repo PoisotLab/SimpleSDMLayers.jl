@@ -30,6 +30,19 @@ Base.min
 -
 *
 /
+Base.show
+Base.sqrt
+Base.hcat
+Base.vcat
+Base.log
+Base.log2
+Base.log1p
+Base.log10
+Base.exp
+Base.exp2
+Base.exp10
+Base.expm1
+Base.abs
 ```
 
 ## From `Broadcast`
