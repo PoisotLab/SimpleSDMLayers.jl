@@ -14,7 +14,7 @@ isdir(ENV["RASTERDATASOURCES_PATH"]) || mkdir(ENV["RASTERDATASOURCES_PATH"])
 ```@example consensus
 using SimpleSDMLayers
 using Plots
-default(; frame=:box)
+defaults(; frame=:box)
 
 bbox = (left=8.25, right=10.0, bottom=41.2, top=43.2)
 lc = SimpleSDMPredictor(EarthEnv{LandCover}, 1:12; bbox...)
@@ -39,7 +39,7 @@ passed to the function.
 We can visualize the result of this operation:
 
 ```@example consensus
-plot(lc_heterogeneity, c=:dense, xlab="Longitude", yab="Latitude")
+plot(lc_heterogeneity, c=:dense, xlab="Longitude", ylab="Latitude")
 ```
 
 In the next step, we want to return the identifier of the layer with the highest
@@ -61,7 +61,7 @@ lc_palette = [colorant"#32a852", colorant"#4cc76c", colorant"#4c702a", colorant"
 # We get the values as Float64 for plotting
 lc_consensus = mosaic(safefindmax, lc, Float64; sanitize=false)
 
-plot(lc_consensus, c=cgrad(lc_palette, [1, 12], categorical=true))
+plot(lc_consensus, c=cgrad(lc_palette))
 xaxis!("Longitude")
 yaxis!("Latitude")
 ```

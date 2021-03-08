@@ -19,6 +19,11 @@ doesn't matter), but you can generally specify other names with `latitude =
 
 So let's start by getting our data:
 
+```@setup dataframes
+ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
+isdir(ENV["RASTERDATASOURCES_PATH"]) || mkdir(ENV["RASTERDATASOURCES_PATH"]) 
+```
+
 ```@example dataframes
 # Load packages
 using SimpleSDMLayers
@@ -29,7 +34,7 @@ using Statistics
 using DataFrames
 
 # Load environmental data
-temperature, precipitation = worldclim([1,12])
+temperature, precipitation = SimpleSDMPredictor(WorldClim{BioClim}, [1,12])
 
 # Get GBIF occurrences
 kingfisher = GBIF.taxon("Megaceryle alcyon", strict=true)
