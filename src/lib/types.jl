@@ -48,23 +48,13 @@ simplesdm_types = (:SimpleSDMResponse, :SimpleSDMPredictor)
 
 for simplesdm_type in simplesdm_types
     eval(quote
-        """
-            $($simplesdm_type)(grid::Matrix{Union{Nothing,T}}) where {T}
 
-        Returns a `$($simplesdm_type)` spanning the entire globe.
-        """
-        function $simplesdm_type(grid::Matrix{Union{Nothing,T}}) where {T}
-            return $simplesdm_type(grid, -180.0, 180.0, -90.0, 90.0)
+        function $simplesdm_type(grid::Matrix{T}; left::K=-180.0, right::K=180.0, bottom::K=-90.0, top::K=90.0) where {T, K<:AbstractFloat}
+            return $simplesdm_type(convert(Matrix{Union{Nothing,T}}, grid), left, right, bottom, top)
         end
 
-        """
-            $($simplesdm_type)(grid::Matrix{Union{Nothing,T}}) where {T}
-
-        Returns a `$($simplesdm_type)` spanning the entire globe by converting to the
-        correct type, *i.e.* with `Nothing` as an acceptable value.
-        """
-        function $simplesdm_type(grid::Matrix{T}) where {T}
-            return $simplesdm_type(convert(Matrix{Union{Nothing,T}}, grid), -180.0, 180.0, -90.0, 90.0)
+        function $simplesdm_type(grid::Matrix{Union{Nothing,T}}; left::K=-180.0, right::K=180.0, bottom::K=-90.0, top::K=90.0) where {T, K<:AbstractFloat}
+            return $simplesdm_type(grid, left, right, bottom, top)
         end
 
         function $simplesdm_type(grid::Matrix{T}, l::K, r::K, b::K, t::K) where {T, K<:AbstractFloat}
@@ -74,5 +64,6 @@ for simplesdm_type in simplesdm_types
         function $simplesdm_type(grid::Matrix{T}, L::K) where {T, K<:SimpleSDMLayer}
             return $simplesdm_type(convert(Matrix{Union{Nothing,T}}, grid), L.left, L.right, L.bottom, L.top)
         end
+
     end)
 end
