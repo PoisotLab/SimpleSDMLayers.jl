@@ -5,6 +5,7 @@ In this example, we will write the BIOCLIM species distribution model using
 
 ```@setup bioclim
 ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
+isdir(ENV["RASTERDATASOURCES_PATH"]) || mkdir(ENV["RASTERDATASOURCES_PATH"]) 
 ```
 
 ```@example bioclim

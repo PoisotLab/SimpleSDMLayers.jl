@@ -8,6 +8,7 @@ for a few occurrences of the kingfisher *Megaceryle alcyon*.
 
 ```@setup temp
 ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
+isdir(ENV["RASTERDATASOURCES_PATH"]) || mkdir(ENV["RASTERDATASOURCES_PATH"]) 
 ```
 
 ```@example temp

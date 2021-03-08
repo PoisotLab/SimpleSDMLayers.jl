@@ -7,6 +7,7 @@ for each layers are in the function documentation):
 
 ```@setup temp
 ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
+isdir(ENV["RASTERDATASOURCES_PATH"]) || mkdir(ENV["RASTERDATASOURCES_PATH"]) 
 ```
 
 ```@example temp

@@ -8,6 +8,7 @@ specifically for these things.
 
 ```@setup consensus
 ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
+isdir(ENV["RASTERDATASOURCES_PATH"]) || mkdir(ENV["RASTERDATASOURCES_PATH"]) 
 ```
 
 ```@example cons
