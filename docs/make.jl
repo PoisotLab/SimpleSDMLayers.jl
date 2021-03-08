@@ -19,7 +19,6 @@ makedocs(
             "Types" => "man/types.md",
             "Overloads" => "man/overloads.md",
             "Other operations" => "man/operations.md",
-            "Plotting" => "man/plots.md",
             "Internal functions" => "man/internals.md"
         ],
         "Examples" => [
@@ -35,8 +34,7 @@ makedocs(
             "BIOCLIM from scratch" => "sdm/bioclim.md"
         ]
     ],
-    checkdocs=:all,
-    strict=true
+    checkdocs=:all
 )
 
 run(`find . -type f -size +40M -delete`)
