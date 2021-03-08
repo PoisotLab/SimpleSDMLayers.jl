@@ -11,7 +11,7 @@ ENV["RASTERDATASOURCES_PATH"] = "rasterdata"
 isdir(ENV["RASTERDATASOURCES_PATH"]) || mkdir(ENV["RASTERDATASOURCES_PATH"]) 
 ```
 
-```@example cons
+```@example consensus
 using SimpleSDMLayers
 using Plots
 default(; frame=:box)
@@ -23,7 +23,7 @@ lc = SimpleSDMPredictor(EarthEnv{LandCover}, 1:12; bbox...)
 The first step is to measure Shannon's entropy, which we can get by only
 counting the values that are not `nothing`:
 
-```@example cons
+```@example consensus
 function shannon(x)
     x = x ./ sum(x)
     return -sum(x.*log2.(x))
@@ -38,7 +38,7 @@ passed to the function.
 
 We can visualize the result of this operation:
 
-```@example cons
+```@example consensus
 plot(lc_heterogeneity, c=:dense, xlab="Longitude", yab="Latitude")
 ```
 
@@ -47,7 +47,7 @@ value, to get the dominant landcover type. For this operation, we need *all*
 values includin `nothing` and `NaN`, so we will write a "safe" `findmax`
 function:
 
-```@example cons
+```@example consensus
 function safefindmax(x)
     all(isnothing.(x)) && return nothing
     all(isnan.(filter(!isnothing, x))) && return nothing
