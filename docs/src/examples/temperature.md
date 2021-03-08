@@ -20,7 +20,7 @@ visualize these data:
 
 ```@example temp
 using StatsPlots
-defaults(; c=:thermal, frame=:box)
+default(; c=:thermal, frame=:box)
 plot(temperature)
 xaxis!("Longitude")
 yaxis!("Latitude")

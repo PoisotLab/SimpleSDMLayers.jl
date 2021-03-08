@@ -14,7 +14,7 @@ isdir(ENV["RASTERDATASOURCES_PATH"]) || mkdir(ENV["RASTERDATASOURCES_PATH"])
 ```@example consensus
 using SimpleSDMLayers
 using Plots
-defaults(; frame=:box)
+default(; frame=:box)
 
 bbox = (left=8.25, right=10.0, bottom=41.2, top=43.2)
 lc = SimpleSDMPredictor(EarthEnv{LandCover}, 1:12; bbox...)
