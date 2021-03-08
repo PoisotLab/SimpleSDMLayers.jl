@@ -14,8 +14,9 @@ Thanks to the integration with Plots and StatsPlots, we can very rapidly
 visualize these data:
 
 ```@example temp
-using Plots, StatsPlots
-heatmap(temperature, c=:cividis, frame=:box)
+using StatsPlots
+defaults(; c=:thermal, frame=:box)
+plot(temperature)
 xaxis!("Longitude")
 yaxis!("Latitude")
 ```
@@ -24,7 +25,7 @@ Let's also have a look at the density while we're at it:
 
 ```@example temp
 density(temperature, frame=:zerolines, c=:grey, fill=(0, :grey, 0.2), leg=false)
-xaxis!("Temperature", (-50,30))
+xaxis!("Temperature", extrema(temperature))
 ```
 
 The next step is to clip the data to the region of interest. This requires a the
@@ -33,7 +34,7 @@ can also make a quick heatmap to see what the region looks like:
 
 ```@example temp
 temperature_europe = temperature[left=-11.0, right=31.4, bottom=29.0, top=71.2]
-heatmap(temperature_europe, c=:cividis, aspectratio=1, frame=:box)
+heatmap(temperature_europe)
 ```
 
 The next step will be to coarsen these data, which requires to give the number
