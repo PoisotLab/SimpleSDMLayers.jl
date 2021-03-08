@@ -7,6 +7,7 @@ latitudes
 longitudes
 clip
 mask
+mask!
 rescale!
 rescale
 mosaic
