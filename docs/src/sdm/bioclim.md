@@ -31,8 +31,8 @@ the bounding box for the observations - just to make sure that we will have
 something large enough, we will add a 2 degrees padding around it:
 
 ```@example bioclim
-left, right = extrema([o.longitude for o in obs]) .+ (-5,5)
-bottom, top = extrema([o.latitude for o in obs]) .+ (-5,5)
+left, right = extrema(longitudes(obs)) .+ (-5,5)
+bottom, top = extrema(latitudes(obs)) .+ (-5,5)
 ```
 
 With this information in hand, we can start getting our variables. In this
