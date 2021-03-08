@@ -16,7 +16,7 @@ n4 = fill(4.0, 5, 3)
 s4 = SimpleSDMResponse(n4, 3.0, 4.2, 3.0, 5.0)
 
 # Test
-L = mosaic(mean, [s1, s2, s3, s4])
+L = mosaic(mean, [s1, s2, s3, s4], Float32)
 
 @test typeof(L) == SimpleSDMResponse{Float32}
 @test extrema(L) == (1.0f0, 4.0f0)
