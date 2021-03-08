@@ -19,38 +19,21 @@ only focus on the 11 first variables, since we do not want the information on
 open water (layer 12):
 
 ```@example cons
-lc = landcover(1; full=false, bbox...)
-use = fill(NaN32, size(lc)..., 11)
-```
+bbox = (left=8.25, right=10.0, bottom=41.2, top=43.2)
+lc = SimpleSDMPredictor(EarthEnv{LandCover}, 1:12; bbox...)
 
-At this point, we will simply fill in the first "slice" of our datacube with
-values from the layer:
-
-```@example cons
-for (i,e) in enumerate(lc.grid)
-    coord = (CartesianIndices(size(lc.grid))[i].I..., 1)
-    if !isnothing(e)
-        use[coord...] = e
-    end
+function safefindmax(x)
+    all(isnothing.(x)) && return nothing
+    all(isnan.(filter(!isnothing, x))) && return nothing
+    replace!(x, nothing => -Inf)
+    replace!(x, NaN => -Inf)
+    return findmax(x)[2]
 end
+
+consensus = convert(Float64, xmosaic(safefindmax, lc, Int64; sanitize=false))
+
+plot(consensus, c=cgrad(:gist_earth, 12, categorical=true))
 ```
-
-The next step is to repeat this process for all other layers, filling the
-appropriate data cube slice:
-
-```@example cons
-for layer in 2:11
-    lc = landcover(layer; full=false, bbox...)
-    for (i,e) in enumerate(lc.grid)
-        coord = (CartesianIndices(size(lc.grid))[i].I..., layer)
-        if !isnothing(e)
-            use[coord...] = e
-        end
-    end
-end
-```
-
-To perform the actual analysis, we will define a `get_most_common_landuse` function, which will return the index of the layer with the highest score:
 
 ```@example cons
 function get_most_common_landuse(f)
@@ -68,11 +51,36 @@ end
 ```
 
 ```@example cons
-consensus = mapslices(get_most_common_landuse, use; dims=3)[:,:,1]
-entropy = mapslices(shannon, use; dims=3)[:,:,1]
+bbox = (left=8.25, right=10.0, bottom=41.2, top=43.2)
+lc = SimpleSDMPredictor(EarthEnv{LandCover}, 1:12; bbox...)
 
-consensus = SimpleSDMResponse(consensus, lc)
-entropy = SimpleSDMResponse(entropy, lc)
+function safefindmax(x)
+    all(isnothing.(x)) && return nothing
+    all(isnan.(filter(!isnothing, x))) && return nothing
+    replace!(x, nothing => -Inf)
+    replace!(x, NaN => -Inf)
+    return findmax(x)[2]
+end
+
+function safeshannon(x)
+    all(isnothing.(x)) && return nothing
+    all(isnan.(filter(!isnothing, x))) && return nothing
+    replace!(x, nothing => 0.0)
+    replace!(x, NaN => 0.0)
+    filter!(!isequal(0.0), x)
+    sum(x) == 0.0 && return nothing
+    length(x) == 0 && return nothing
+    x = x ./ sum(x)
+    return -sum(x.*log2.(x))
+end
+
+consensus = convert(Float64, xmosaic(safefindmax, lc, Int64; sanitize=false))
+het = convert(Float64, xmosaic(safeshannon, lc, Float64; sanitize=false))
+replace!(het, -0.0 => nothing)
+
+plot(het)
+
+plot(consensus, c=cgrad(:gist_earth, 12, categorical=true))
 ```
 
 ```@example cons

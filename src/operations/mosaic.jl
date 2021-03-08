@@ -1,15 +1,17 @@
 """
-    mosaic(f::TF, layers::Vector{T}) where {TF <: Function, T <: SimpleSDMLayer}
+    mosaic(f::TF, layers::Vector{T}, ::RT; sanitize::Bool=true, rtype::Type=Float64) where {TF <: Function, T <: SimpleSDMLayer}
 
 Joins a series of _possibly_ overlapping `layers` by applying the function `f`
 to the values that occupy the same cells. Note that the function `f`  should
 return a single value and accept an vector as input. Functions like
-`Statistics.mean`, etc, work well.
+`Statistics.mean`, etc, work well. `RT` is the return type of the function `f`.
 
-Using `mosaic` with `maximum` is equivalent to `raster::merge` from the *R*
-package `raster`.
+The `sanitize` keyword is used to determine whether values that are `NaN` or
+`nothing` should be removed before passing the vector of values to `f`. Using
+`sanitize=false` can be useful if you want to do things like finding which layer
+has the maximal value, in a context where some layers may have `nothing`.
 """
-function mosaic(f::TF, layers::Vector{T}) where {TF <: Function, T <: SimpleSDMLayer}
+function xmosaic(f::TF, layers::Vector{T}, ::Type{RT}; sanitize::Bool=true) where {TF <: Function, T <: SimpleSDMLayer, RT}
 
     # Check the dimensions
     for i in 1:(length(layers)-1)
@@ -19,16 +21,7 @@ function mosaic(f::TF, layers::Vector{T}) where {TF <: Function, T <: SimpleSDML
             end
         end
     end
-    
-    # Check the types
-    itypes = eltype.(layers)
-    if length(unique(itypes)) > 1
-        @warn """
-        The numeric types of the layers are not unique, this can cause performance issues.
-        The returned layer will have $(first(itypes)).
-        """
-    end
-    
+
     # Get the new bounding boxes
     n_left = minimum([layer.left for layer in layers])
     n_right = maximum([layer.right for layer in layers])
@@ -41,17 +34,20 @@ function mosaic(f::TF, layers::Vector{T}) where {TF <: Function, T <: SimpleSDML
     
     # Prepare the grid
     grid = fill(nothing, nc, nr)
-    grid = convert(Matrix{Union{Nothing,itypes[1]}}, grid)
+    grid = convert(Matrix{Union{Nothing,RT}}, grid)
     L = SimpleSDMResponse(grid, n_left, n_right, n_bottom, n_top)
 
     # Fill in the information
     for lat in latitudes(L)
         for lon in longitudes(L)
-            V = [layer[lon, lat] for layer in layers]
-            filter!(!isnothing, V)
-            filter!(!isnan, V)
+            V = Any[layer[lon, lat] for layer in layers]
+            if sanitize
+                filter!(!isnothing, V)
+                filter!(!isnan, V)
+            end
             length(V) == 0 && continue
-            L[lon, lat] = convert(itypes[1], f(V))
+            r = f(V)
+            L[lon, lat] = isnothing(r) ? nothing : convert(RT, r)
         end
     end
 
