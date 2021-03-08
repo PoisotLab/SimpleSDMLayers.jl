@@ -9,6 +9,7 @@ Modification is done in-place.
 """
 function rescale!(layer::TI, template::TJ) where {TI <: SimpleSDMLayer, TJ <: SimpleSDMLayer}
     return rescale!(layer, extrema(template))
+    return layer
 end
 
 """
@@ -21,6 +22,7 @@ in-place.
 function rescale!(layer::TI, t::Tuple{T,T}) where {TI <: SimpleSDMLayer, T <: Number}
     occ = findall(!isnothing, layer.grid)
     layer.grid[occ] .= _rescale(layer.grid[occ], t...)
+    return layer
 end
 
 """
