@@ -56,4 +56,6 @@ lc_palette = [colorant"#32a852", colorant"#4cc76c", colorant"#4c702a", colorant"
 lc_consensus = mosaic(safefindmax, lc, Float64; sanitize=false)
 
 plot(lc_consensus, c=cgrad(lc_palette, [1, 12], categorical=true))
+xaxis!("Longitude")
+yaxis!("Latitude")
 ```
