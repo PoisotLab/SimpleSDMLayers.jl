@@ -50,8 +50,10 @@ function safefindmax(x)
     return findmax(x)[2]
 end
 
+lc_palette = [colorant"#32a852", colorant"#4cc76c", colorant"#4c702a", colorant"#1c8054", colorant"#a2ad58", colorant"#c2b057", colorant"#6e5f16", colorant"#227375", colorant"#751010", colorant"#c1f6f7", colorant"#999999", colorant"#1226ff"]
+
 # We get the values as Float64 for plotting
 lc_consensus = mosaic(safefindmax, lc, Float64; sanitize=false)
 
-plot(lc_consensus, c=cgrad(:gist_earth, length(lc), categorical=true))
+plot(lc_consensus, c=cgrad(lc_palette, [1, 12], categorical=true))
 ```
