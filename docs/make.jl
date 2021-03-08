@@ -33,7 +33,9 @@ makedocs(
             "GBIF integration" => "sdm/gbif.md",
             "BIOCLIM from scratch" => "sdm/bioclim.md"
         ]
-    ]
+    ],
+    checkdocs=:all,
+    strict=true
 )
 
 run(`find . -type f -size +40M -delete`)
