@@ -47,6 +47,7 @@ function mosaic(f::TF, layers::Vector{T}) where {TF <: Function, T <: SimpleSDML
     # Fill in the information
     for lat in latitudes(L)
         for lon in longitudes(L)
+            # ?
             V = [layer[lon, lat] for layer in layers]
             filter!(!isnothing, V)
             filter!(!isnan, V)
