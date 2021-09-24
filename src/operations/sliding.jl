@@ -40,21 +40,38 @@ function slidingwindow(layer::LT, f::FT, d::IT; threaded::Bool=Threads.nthreads(
     _lat, _lon = latitudes(layer), longitudes(layer)
 
     # Vector of all positions with a value
-    filled_positions = CartesianIndices(layer.grid)[findall(!isnothing, layer.grid)]
+    filled_positions = findall(!isnothing, layer.grid)
 
     # We then filter in the occupied positions
     if threaded
         Threads.@threads for pos in filled_positions
-            neighbors = filter(p -> haversine((_lon[Tuple(pos)[2]], _lat[Tuple(pos)[1]]), (_lon[Tuple(p)[2]], _lat[Tuple(p)[1]])) < d, filled_positions)
-            N.grid[pos] = f(layer.grid[neighbors])
+            N.grid[pos] = f(_sliding_values(layer, _lon[Tuple(pos)[2]], _lat[Tuple(pos)[1]], d))
         end
     else
         for pos in filled_positions
-            neighbors = filter(p -> haversine((_lon[Tuple(pos)[2]], _lat[Tuple(pos)[1]]), (_lon[Tuple(p)[2]], _lat[Tuple(p)[1]])) < d, filled_positions)
-            N.grid[pos] = f(layer.grid[neighbors])
+            N.grid[pos] = f(_sliding_values(layer, _lon[Tuple(pos)[2]], _lat[Tuple(pos)[1]], d))
         end
     end
 
     # And we return the object
     return N
+end
+
+function _sliding_values(layer, lon, lat, d; R=6371.0)
+    # Bounding box (approx.) for the sliding window of length d at the given point
+    max_lat = min(90.0, lat+(180.0*d)/(π*R))
+    min_lat = max(-90.0, lat-(180.0*d)/(π*R))
+    max_lon = min(180.0, lon+(360.0*d)/(π*R))
+    min_lon = max(-180.0, lon-(360.0*d)/(π*R))
+    
+    # Extracted layer for the sliding window
+    _tmp = layer[left=min_lon, right=max_lon, top=max_lat, bottom=min_lat]
+    _lat, _lon = latitudes(_tmp), longitudes(_tmp)
+    
+    # Filter the correct positions
+    filled_positions = findall(!isnothing, _tmp.grid)
+    neighbors = filter(p -> haversine((lon, lat), (_lon[Tuple(p)[2]], _lat[Tuple(p)[1]])) < d, filled_positions)
+
+    # Return
+    return _tmp.grid[neighbors]
 end
