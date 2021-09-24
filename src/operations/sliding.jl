@@ -1,15 +1,3 @@
-function haversine(lon1, lat1, lon2, lat2; R=6371.0)
-    φ1 = lat1 * π/180.0
-    φ2 = lat2 * π/180.0
-    Δφ = (lat2-lat1) * π/180.0
-    Δλ = (lon2-lon1) * π/180.0
-    a = sin(Δφ/2.0)^2.0 + cos(φ1)*cos(φ2) * sin(Δλ)^2.0
-    c = 2.0 * atan(sqrt(a), sqrt(1.0-a))
-    return R*c
-end
-
-haversine(p1, p2; R=6371.0) = haversine(p1..., p2...; R=R)
-
 """
     slidingwindow(L::LT, f::FT, d::IT) where {LT <: SimpleSDMLayer, FT <: Function, IT <: Number}
 
@@ -70,7 +58,7 @@ function _sliding_values(layer, lon, lat, d; R=6371.0)
     
     # Filter the correct positions
     filled_positions = findall(!isnothing, _tmp.grid)
-    neighbors = filter(p -> haversine((lon, lat), (_lon[Tuple(p)[2]], _lat[Tuple(p)[1]])) < d, filled_positions)
+    neighbors = filter(p -> Distances.haversine((lon, lat), (_lon[Tuple(p)[2]], _lat[Tuple(p)[1]]), R) < d, filled_positions)
 
     # Return
     return _tmp.grid[neighbors]

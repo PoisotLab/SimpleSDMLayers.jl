@@ -6,6 +6,7 @@ using RecipesBase
 using ZipFile
 using Requires
 using Statistics
+using Distances
 
 include(joinpath("lib", "types.jl"))
 export SimpleSDMLayer, SimpleSDMResponse, SimpleSDMPredictor
