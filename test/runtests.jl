@@ -4,6 +4,7 @@ using Test
 global anyerrors = false
 
 tests = [
+   "MultivariateStats" => "extensions/multivariatestats.jl",
    "construction" => "core/construction.jl",
    "lat./lon." => "core/latlon.jl",
    "lat./lon. conversion" => "core/coordconvert.jl",
@@ -24,7 +25,6 @@ tests = [
    "chelsa" => "data/chelsa.jl",
    "plotting" => "extensions/plots.jl",
    "GBIF" => "extensions/gbif.jl",
-   "MultivariateStats" => "extensions/multivariatestats.jl"
 ]
 
 for test in tests
