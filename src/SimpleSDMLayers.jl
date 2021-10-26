@@ -13,9 +13,6 @@ export Point, Polygon
 using PolygonOps
 using StatsBase
 
-using MultivariateStats
-using MultivariateStats: PCA, PPCA, KernelPCA, Whitening
-
 # Basic types for the package
 include(joinpath("lib", "types.jl"))
 export SimpleSDMLayer, SimpleSDMResponse, SimpleSDMPredictor
@@ -57,7 +54,7 @@ for s in instances(CMIP6)
 end
 for s in instances(RepresentativeConcentrationPathway)
     @eval export $(Symbol(s))
-end 
+end
 for s in instances(SharedSocioeconomicPathway)
     @eval export $(Symbol(s))
 end
@@ -88,8 +85,7 @@ include(joinpath("operations", "sliding.jl"))
 include(joinpath("operations", "mask.jl"))
 include(joinpath("operations", "rescale.jl"))
 include(joinpath("operations", "mosaic.jl"))
-include(joinpath("operations", "transform.jl"))
-export coarsen, slidingwindow, mask, rescale!, rescale, mosaic, fit, transform, transform!
+export coarsen, slidingwindow, mask, rescale!, rescale, mosaic
 
 include(joinpath("recipes", "recipes.jl"))
 export bivariate
@@ -110,6 +106,11 @@ function __init__()
     @require DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
         @info "Loading DataFrames support for SimpleSDMLayers.jl"
         include("integrations/DataFrames.jl")
+    end
+
+    @require MultivariateStats = "6f286f6a-111f-5878-ab1e-185364afe411" begin
+        @info "Loading MultivariateStats support for SimpleSDMLayers.jl"
+        include("integrations/MultivariateStats.jl")
     end
 
 end

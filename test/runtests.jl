@@ -24,6 +24,7 @@ tests = [
    "chelsa" => "data/chelsa.jl",
    "plotting" => "extensions/plots.jl",
    "GBIF" => "extensions/gbif.jl",
+   "MultivariateStats" => "extensions/multivariatestats.jl"
 ]
 
 for test in tests
