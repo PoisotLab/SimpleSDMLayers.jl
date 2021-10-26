@@ -13,6 +13,9 @@ export Point, Polygon
 using PolygonOps
 using StatsBase
 
+using MultivariateStats
+using MultivariateStats: PCA, PPCA, KernelPCA, Whitening
+
 # Basic types for the package
 include(joinpath("lib", "types.jl"))
 export SimpleSDMLayer, SimpleSDMResponse, SimpleSDMPredictor
@@ -85,7 +88,8 @@ include(joinpath("operations", "sliding.jl"))
 include(joinpath("operations", "mask.jl"))
 include(joinpath("operations", "rescale.jl"))
 include(joinpath("operations", "mosaic.jl"))
-export coarsen, slidingwindow, mask, rescale!, rescale, mosaic
+include(joinpath("operations", "transform.jl"))
+export coarsen, slidingwindow, mask, rescale!, rescale, mosaic, fit, transform, transform!
 
 include(joinpath("recipes", "recipes.jl"))
 export bivariate

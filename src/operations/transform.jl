@@ -6,9 +6,12 @@
 
 """
 
-function embed(layers::Vector{T}, PCA) where T <: SimpleSDMLayer
+function fit(PCA, layers::Vector{T}) where T <: SimpleSDMLayer
 
 end
+
+function transform(W, layers::Vector{T}) where T<: SimpleSDMLayer end
+function transform!(W, layers::Vector{T}) where T<: SimpleSDMLayer end 
 
 function make_pca_input(layers) 
 	numdims = length(layers)
