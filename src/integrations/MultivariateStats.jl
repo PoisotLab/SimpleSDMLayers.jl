@@ -14,6 +14,7 @@ function MultivariateStats.fit(
     T<:SimpleSDMLayer,
     PT<:Union{Type{MultivariateStats.PCA},Type{MultivariateStats.PPCA}},
 }
+	_layers_are_compatible(layers) || return ArgumentError("layers not compatible")
     input = _make_input(layers)
     pca = MultivariateStats.fit(a, input, kwargs...)
     return pca
