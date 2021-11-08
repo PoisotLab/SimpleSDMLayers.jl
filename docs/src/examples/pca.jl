@@ -1,5 +1,9 @@
 # # Principal-component analysis of many `SDMLayers`
 
+using MultivariateStats
+using Plots
+
+
 # The `SimpleSDMLayers` enables integration with `MultivariateStats.jl` 
 # In this example, we will show how this can work.
 
@@ -10,7 +14,8 @@ layers = convert(
     SimpleSDMPredictor(WorldClim, HabitatHeterogeneity, 1:19; resolution=5, boundaries...),
 )
 
-using MultivariateStats
 
 pca = fit(PCA, layers)
 newlayers = transform(pca, layers)
+
+plot.(newlayers)
