@@ -3,7 +3,6 @@
 using SimpleSDMLayers
 using MultivariateStats
 using Plots
-using Unitful
 
 # The `SimpleSDMLayers` enables integration with `MultivariateStats.jl` 
 # In this example, we will show how this can work.
@@ -19,6 +18,7 @@ layers = convert.(
 pca = fit(PCA, layers)
 newlayers = transform(pca, layers)
 
+# idk why this doesn't work
 
 pcaplots = plot.(newlayers)
 plot(pcaplots...)
