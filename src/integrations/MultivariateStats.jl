@@ -10,8 +10,6 @@ function MultivariateStats.fit(a, layers::Vector{T}, kwargs...) where {T<:Simple
     _layers_are_compatible(layers) || return ArgumentError("layers are not compatible")
     common_keys = reduce(∩, keys.(layers))
     input = hcat([vcat([layer[key] for layer in layers]...) for key in common_keys]...)
-
-    @show size(input)
     proj = MultivariateStats.fit(a, input, kwargs...)
     return proj
 end
