@@ -14,11 +14,12 @@ layers = convert.(
     SimpleSDMPredictor(WorldClim, BioClim, 1:19; boundaries...),
 )
 
+# fit pca and project to a new set of layers
 
 pca = fit(PCA, layers)
 newlayers = transform(pca, layers)
 
-# idk why this doesn't work
+# plot them
 
 pcaplots = plot.(newlayers)
 plot(pcaplots...)

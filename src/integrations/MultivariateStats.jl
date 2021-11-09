@@ -8,8 +8,11 @@
 """
 function MultivariateStats.fit(a, layers::Vector{T}, kwargs...) where {T<:SimpleSDMLayer}
     _layers_are_compatible(layers) || return ArgumentError("layers are not compatible")
-    input = _make_input(layers)
-    proj = MultivariateStats.fit(a, input', kwargs...)
+    common_keys = reduce(∩, keys.(layers))
+    input = hcat([vcat([layer[key] for layer in layers]...) for key in common_keys]...)
+
+    @show size(input)
+    proj = MultivariateStats.fit(a, input, kwargs...)
     return proj
 end
 
@@ -25,11 +28,14 @@ function MultivariateStats.transform(proj::P, layers::Vector{T}) where {P,T<:Sim
     newlayers = [similar(layers[begin]) for i in 1:outdim]
     common_keys = reduce(∩, keys.(layers))
 
-    for key in common_keys
-        pcaproj = A' * vcat([layer[key] for layer in layers]...)
+    input = hcat([vcat([layer[key] for layer in layers]...) for key in common_keys]...)
+
+    for (ct,key) in enumerate(common_keys)
+        pcaproj = A' * input[:,ct]
         for i in 1:outdim
             newlayers[i][key] = pcaproj[i]
         end
     end
     return map(f->rescale(f, (0,1)),newlayers)
 end
+
