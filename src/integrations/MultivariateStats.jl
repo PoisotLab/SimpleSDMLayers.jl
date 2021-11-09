@@ -23,9 +23,9 @@ end
 """
 function transform(
     proj,
-    layers::AbstractVecOrMat{U},
+    layers::AbstractVecOrMat{U};
     kwargs...,
-) where {T<:Union{MultivariateStats.Whitening,MultivariateStats.PCA},U<:SimpleSDMLayer}
+) where {U<:SimpleSDMLayer}
     outdim = MultivariateStats.outdim(proj)
     newlayers = [similar(layers[begin]) for i = 1:outdim]
     common_keys = reduce(∩, keys.(layers))
@@ -40,3 +40,5 @@ function transform(
     end
     return newlayers
 end
+
+

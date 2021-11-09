@@ -111,6 +111,7 @@ function __init__()
     @require MultivariateStats = "6f286f6a-111f-5878-ab1e-185364afe411" begin
         @info "Loading MultivariateStats support for SimpleSDMLayers.jl"
         include("integrations/MultivariateStats.jl")
+        export transform
     end
 
 end
