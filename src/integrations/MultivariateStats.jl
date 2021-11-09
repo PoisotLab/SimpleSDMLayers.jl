@@ -15,12 +15,18 @@ function MultivariateStats.fit(a, layers::Vector{T}, kwargs...) where {T<:Simple
 end
 
 """
-	MultivariateStats.transform(proj::P, layers::Vector{T}) where {P,T<:SimpleSDMLayer}
+    MultivariateStats.transform(
+    proj::PT, 
+    layers::Vector{V}, 
+    kwargs...) where {PT<:Union{MultivariateStats.PCA, MultivariateStats.PPCA},V<:SimpleSDMLayer} 
 
 	Overload of the `transform` function from `MultivariateStats.jl`. Here `proj` is a 
 	and output object from `MultivariateStats.fit` (see above). 
 """
-function MultivariateStats.transform(proj::P, layers::Vector{T}) where {P,T<:SimpleSDMLayer}
+function MultivariateStats.transform(
+    proj::PT, 
+    layers::Vector{V}, 
+    kwargs...) where {PT<:Union{MultivariateStats.PCA, MultivariateStats.PPCA},V<:SimpleSDMLayer} 
     A = MultivariateStats.projection(proj)
     outdim = MultivariateStats.outdim(proj)    
     newlayers = [similar(layers[begin]) for i in 1:outdim]
@@ -34,6 +40,32 @@ function MultivariateStats.transform(proj::P, layers::Vector{T}) where {P,T<:Sim
             newlayers[i][key] = pcaproj[i]
         end
     end
-    return map(f->rescale(f, (0,1)),newlayers)
+    return newlayers
 end
 
+
+"""
+    MultivariateStats.transform(
+    proj::Whitening{T}, 
+    layers::Vector{V}, 
+    kwargs...) where {T<:Real,V<:SimpleSDMLayer} 
+
+	Overload of the `transform` function from `MultivariateStats.jl`. Here `proj` is a 
+	and output object from `MultivariateStats.fit` (see above). 
+"""
+function MultivariateStats.transform(
+    proj::MultivariateStats.Whitening{T}, layers::Vector{V}, kwargs...) where {T<:Real,V<:SimpleSDMLayer} 
+    outdim = MultivariateStats.outdim(proj)    
+    newlayers = [similar(layers[begin]) for i in 1:outdim]
+    common_keys = reduce(∩, keys.(layers))
+
+    input = hcat([vcat([layer[key] for layer in layers]...) for key in common_keys]...)
+
+    for (ct,key) in enumerate(common_keys)
+        pcaproj = MultivariateStats.transform(proj,input[:,ct])
+        for i in 1:outdim
+            newlayers[i][key] = pcaproj[i]
+        end
+    end
+    return newlayers
+end
