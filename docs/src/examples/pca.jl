@@ -24,7 +24,7 @@ layers = convert.(
 # fit pca and project to a new set of layers
 
 pca = fit(PCA, layers)
-newlayers = SimpleSDMLayers.transform(pca, layers)
+newlayers = transform(pca, layers)
 
 # plot them
 
@@ -46,7 +46,7 @@ plot(plot.(wlayers)...)
 # Now we call methods just as in `MultivariateStats`
 
 w = fit(Whitening, wlayers)
-newlayers = SimpleSDMLayers.transform(w, wlayers)
+newlayers = transform(w, wlayers)
 
 
 # and plot the layers without covar
