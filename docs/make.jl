@@ -40,7 +40,8 @@ makedocs(
             "Geometry for clipping" => "examples/geometry.md",
             "Sliding window analysis" => "examples/slidingwindow.md",
             "Landcover data" => "examples/landcover.md",
-            "Multivariate mapping" => "examples/multivariate.md"
+            "Multivariate mapping" => "examples/multivariate.md",
+            "Multivariate statistics" => "examples/pca.md"
         ],
         "SDM case studies" => [
             "GBIF integration" => "sdm/gbif.md",
