@@ -43,7 +43,7 @@ end
 Bin a distance matrix, where m is the maximum distance allowed
 """
 function bin_distances(D, m)
-    return fit(Histogram, vec(D) ./ m, LinRange(0.0, 1.0, 10)).weights .+ 1
+    return fit(Histogram, vec(D) ./ m, LinRange(0.0, 1.0, 10)).weights
 end
 
 """
