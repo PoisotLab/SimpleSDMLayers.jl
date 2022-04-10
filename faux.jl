@@ -5,20 +5,22 @@ using Plots
 using Distances
 using LinearAlgebra
 using StatsBase
+using BenchmarkTools
 
-# One layer - Prince Edward Island, so the geography is actually complex
-_bbox = (left=-64.5, right=-61.9, bottom=45.9, top=47.1)
+# One layer
+_bbox = (left=117.0, right=126.2, bottom=-6.1, top=3.3)
 elevation = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
 plot(elevation, frame=:box, c=:bamako, dpi=400)
 
 # Occurrences
 observations = occurrences(
-    GBIF.taxon("Vulpes vulpes"; strict=true),
+    GBIF.taxon("Draco beccarii"; strict=true),
     "hasCoordinate" => "true",
-    "decimalLatitude" => (45.9, 47.1),
-    "decimalLongitude" => (-64.5, -61.9),
+    "decimalLatitude" => (_bbox.bottom, _bbox.top),
+    "decimalLongitude" => (_bbox.left, _bbox.right),
     "limit" => 300,
 )
+occurrences!(observations)
 
 """
 Get the coordinates for a list of observations, filtering the ones that do not
@@ -41,7 +43,7 @@ end
 Bin a distance matrix, where m is the maximum distance allowed
 """
 function bin_distances(D, m)
-    return fit(Histogram, vec(D) ./ m, 0.0:0.05:1.0).weights
+    return fit(Histogram, vec(D) ./ m, LinRange(0.0, 1.0, 10)).weights .+ 1
 end
 
 """
@@ -89,7 +91,7 @@ function _initial_proposition(layer, xy, D)
         global proposition
         invalid = true
         while invalid
-            proposition = initial_point(layer, D)
+            proposition = randompoint(rand(xy), rand(D))
             invalid = isnothing(layer[proposition...])
         end
         all_points[i] = proposition
@@ -99,23 +101,28 @@ end
 
 function _points_distance(mocks, m, b)
     mD = distance_matrix(mocks)
-    #maximum(mD) > m && return Inf
     mb = bin_distances(mD, m)
     return kl_divergence(mb, b)
 end
 
-function _improve_one_point!(mocks, layer, D, binned_distances, d0)
+function _improve_one_point!(mocks, layer, D, b, d0)
     random_point = rand(eachindex(mocks))
-    global proposition, nd
+    current = mocks[random_point]
+    global proposition
     invalid = true
+    counter = 0
     while invalid
+        counter += 1
         random_distance = rand(D)
         proposition = randompoint(mocks[random_point], random_distance)
+        mocks[random_point] = proposition
         invalid = isnothing(layer[proposition...])
+        if counter >= 10
+            mocks[random_point] = current
+            return d0
+        end
     end
-    current = mocks[random_point]
-    mocks[random_point] = proposition
-    dt = _points_distance(mocks, maximum(D), binned_distances)
+    dt = _points_distance(mocks, maximum(D), b)
     if dt < d0
         return dt
     else
@@ -127,17 +134,24 @@ end
 layer = copy(elevation)
 xy = coordinates(observations, layer)
 D = distance_matrix(xy)
+b = bin_distances(D, maximum(D))
 m = maximum(D)
 mocks = _initial_proposition(layer, xy, D)
-binned_distances = bin_distances(D, maximum(D))
-
 d0 = _points_distance(mocks, m, b)
+
 progression = zeros(Float64, 10_000)
 progression[1] = d0
 for i in 2:length(progression)
-    @time progression[i] = _improve_one_point!(mocks, layer, D, binned_distances, progression[i-1])
+    progression[i] = _improve_one_point!(mocks, layer, D, b, progression[i-1])
     @info "Time $(i)\t$(progression[i])"
 end
 
 plot(progression, c=:black, lab="", dpi=400, lw=2)
 
+plot(b, dpi=400, lw=0.0, fill=(0, :grey, 0.2), lab="Measured")
+plot!(bin_distances(distance_matrix(mocks), m), c=:black, lab="Simulated")
+
+plot(layer, frame=:box, dpi=600, c=:grey, cbar=false)
+scatter!(xy, c=:black, lab="Occurrences")
+scatter!(mocks, c=:white, lab="Fauxcurrences", alpha=0.7, m=:square, ms=2)
+savefig("demo.png")
