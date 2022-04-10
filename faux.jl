@@ -5,105 +5,132 @@ using Plots
 using Distances
 using LinearAlgebra
 using StatsBase
-using KernelDensity
 
-# One layer
-elevation = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation))
+# One layer - Prince Edward Island, so the geography is actually complex
+_bbox = (left=-64.5, right=-61.9, bottom=45.9, top=47.1)
+elevation = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
+plot(elevation, frame=:box, c=:bamako, dpi=400)
 
 # Occurrences
 observations = occurrences(
-    GBIF.taxon("Hypomyces lactifluorum"; strict=true),
+    GBIF.taxon("Vulpes vulpes"; strict=true),
     "hasCoordinate" => "true",
-    "country" => "CA",
-    "country" => "US",
+    "decimalLatitude" => (45.9, 47.1),
+    "decimalLongitude" => (-64.5, -61.9),
     "limit" => 300,
 )
-occurrences!(observations)
 
-# Clip raster
-elevation = clip(elevation, observations)
+"""
+Get the coordinates for a list of observations, filtering the ones that do not
+correspond to valid layer positions
+"""
+function coordinates(observations, layer)
+    xy = [(observations[i].longitude, observations[i].latitude) for i in 1:length(observations)]
+    filter!(c -> !isnothing(layer[c...]), xy)
+    return xy
+end
 
-# Coordinates
-coordinates = [(observations[i].longitude, observations[i].latitude) for i in 1:length(observations)]
-_R = 6371.0
-_dist = Distances.Haversine(_R)
-intrasp_distances = pairwise(_dist, coordinates)
-max_distance = maximum(vec(intrasp_distances))
-h_intra = fit(Histogram, vec(intrasp_distances) ./ max_distance, 0.0:0.05:1.0).weights
+"""
+Get the distance between points as a matrix
+"""
+function distance_matrix(xy; D=Distances.Haversine(6371.0))
+    return pairwise(D, xy)
+end
 
-# Cells within d
-function randompoint(ref, d, R)
+"""
+Bin a distance matrix, where m is the maximum distance allowed
+"""
+function bin_distances(D, m)
+    b = fit(Histogram, vec(D) ./ m, 0.0:0.05:1.0).weights
+    return b ./ sum(b)
+end
+
+"""
+This solves the direct (first) geodetic problem assuming Haversine distances are
+a correct approximation of the distance between points.
+"""
+function randompoint(ref, d; R=6371.0)
+    # Convert the coordinates from degrees to radians
     λ, φ = deg2rad.(ref)
+    # Get the angular distance
     δ = d / R
-
+    # Pick a random bearing (angle w.r.t. true North)
     α = deg2rad(rand() * 360.0)
+    # Get the new latitude
     φ2 = asin(sin(φ) * cos(δ) + cos(φ) * sin(δ) * cos(α))
+    # Get the new longitude
     λ2 = λ + atan(sin(α) * sin(δ) * cos(φ), cos(δ) - sin(φ) * sin(φ2))
+    # Return the coordinates in degree
     return rad2deg.((λ2, φ2))
 end
 
-# Initial point
-invalid = true
-while invalid
-    # Get a random distance
-    rdist = rand(intrasp_distances)
-    rcent = rand(fauxpoints)
-    new_faux = randompoint(rcent, rdist, _R)
-    invalid = isnothing(elevation[new_faux...])
-end
-fauxpoints = [new_faux]
-
-while length(fauxpoints) < length(coordinates)
+"""
+Get a random point given a layer and the observed distance matrix
+"""
+function initial_point(layer, D; R=6371.0)
     invalid = true
+    global random_destination
     while invalid
         # Get a random distance
-        rdist = rand(intrasp_distances)
-        rcent = rand(fauxpoints)
-        new_faux = randompoint(rcent, rdist, _R)
-        invalid = isnothing(elevation[new_faux...])
+        random_distance = rand(D)
+        random_starting_point = rand(keys(layer))
+        random_destination = randompoint(random_starting_point, random_distance; R=R)
+        invalid = isnothing(layer[random_destination...])
     end
-
-    push!(fauxpoints, new_faux)
-    fd = pairwise(_dist, fauxpoints)
-
-    if maximum(vec(fd)) > max_distance
-        @info "Point rejected (distance too high)"
-        pop!(fauxpoints)
-    end
+    return random_destination
 end
 
-progression = Float64[]
-counter = 0
-d0 = Inf
+layer = copy(elevation)
+xy = coordinates(observations, layer)
+D = distance_matrix(xy)
+m = maximum(D)
+b = bin_distances(D, m)
 
-for i in 1:500_000
-    rdist = rand(intrasp_distances)
-    ridx = rand(1:length(fauxpoints))
+"""
+Generates the initial proposition for points
+"""
+function _initial_proposition(layer, xy, D)
+    i0 = initial_point(layer, D)
+    all_points = fill(i0, length(xy))
+    for i in 2:length(xy)
+        global proposition
+        invalid = true
+        while invalid
+            proposition = initial_point(layer, D)
+            invalid = isnothing(layer[proposition...]) || (maximum(distance_matrix(all_points[1:i])) > maximum(D))
+        end
+        all_points[i] = proposition
+    end
+    return all_points
+end
+
+mocks = _initial_proposition(layer, xy, D)
+binned_distances = bin_distances(D, maximum(D))
+
+function _points_distance(mocks, m, b)
+    mD = distance_matrix(mocks)
+    maximum(mD) > m && return Inf
+    mb = bin_distances(mD, m)
+    return kl_divergence(mb, b)
+end
+
+function _improve_one_point!(mocks, layer, D, binned_distances, d0)
+    random_distance = rand(D)
+    random_point = rand(eachindex(mocks))
+    global proposition, nd
     invalid = true
     while invalid
-        # Get a random distance
-        rdist = rand(intrasp_distances)
-        rcent = fauxpoints[ridx]
-        new_faux = randompoint(rcent, rdist, _R)
-        invalid = isnothing(elevation[new_faux...])
+        proposition = randompoint(mocks[random_point], random_distance)
+        invalid = isnothing(layer[proposition...])
     end
-    oldpoint = fauxpoints[ridx]
-    fauxpoints[ridx] = new_faux
-    fd = pairwise(_dist, fauxpoints)
-    h_faux = fit(Histogram, vec(fd) ./ max_distance, 0.0:0.05:1.0).weights
-    dt = kl_divergence(h_faux ./ sum(h_faux), h_intra ./ sum(h_intra))
+    current = mocks[random_point]
+    mocks[random_point] = proposition
+    dt = _points_distance(mocks, maximum(D), binned_distances)
     if dt < d0
-        d0 = dt
-        @info "Score: $(d0)"
-        counter = 0
+        return dt
     else
-        fauxpoints[ridx] = oldpoint
-        counter = counter + 1
-    end
-    push!(progression, d0)
-    if counter == 100
-        @info "No improvement for the last 100 steps, returning"
-        break
+        mocks[random_point] = current
+        return d0
     end
 end
 
