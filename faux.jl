@@ -41,8 +41,7 @@ end
 Bin a distance matrix, where m is the maximum distance allowed
 """
 function bin_distances(D, m)
-    b = fit(Histogram, vec(D) ./ m, 0.0:0.05:1.0).weights
-    return b ./ sum(b)
+    return fit(Histogram, vec(D) ./ m, 0.0:0.05:1.0).weights
 end
 
 """
@@ -80,12 +79,6 @@ function initial_point(layer, D; R=6371.0)
     return random_destination
 end
 
-layer = copy(elevation)
-xy = coordinates(observations, layer)
-D = distance_matrix(xy)
-m = maximum(D)
-b = bin_distances(D, m)
-
 """
 Generates the initial proposition for points
 """
@@ -97,29 +90,26 @@ function _initial_proposition(layer, xy, D)
         invalid = true
         while invalid
             proposition = initial_point(layer, D)
-            invalid = isnothing(layer[proposition...]) || (maximum(distance_matrix(all_points[1:i])) > maximum(D))
+            invalid = isnothing(layer[proposition...])
         end
         all_points[i] = proposition
     end
     return all_points
 end
 
-mocks = _initial_proposition(layer, xy, D)
-binned_distances = bin_distances(D, maximum(D))
-
 function _points_distance(mocks, m, b)
     mD = distance_matrix(mocks)
-    maximum(mD) > m && return Inf
+    #maximum(mD) > m && return Inf
     mb = bin_distances(mD, m)
     return kl_divergence(mb, b)
 end
 
 function _improve_one_point!(mocks, layer, D, binned_distances, d0)
-    random_distance = rand(D)
     random_point = rand(eachindex(mocks))
     global proposition, nd
     invalid = true
     while invalid
+        random_distance = rand(D)
         proposition = randompoint(mocks[random_point], random_distance)
         invalid = isnothing(layer[proposition...])
     end
@@ -134,7 +124,20 @@ function _improve_one_point!(mocks, layer, D, binned_distances, d0)
     end
 end
 
+layer = copy(elevation)
+xy = coordinates(observations, layer)
+D = distance_matrix(xy)
+m = maximum(D)
+mocks = _initial_proposition(layer, xy, D)
+binned_distances = bin_distances(D, maximum(D))
+
+d0 = _points_distance(mocks, m, b)
+progression = zeros(Float64, 10_000)
+progression[1] = d0
+for i in 2:length(progression)
+    @time progression[i] = _improve_one_point!(mocks, layer, D, binned_distances, progression[i-1])
+    @info "Time $(i)\t$(progression[i])"
+end
+
 plot(progression, c=:black, lab="", dpi=400, lw=2)
 
-plot(h_intra ./ sum(h_intra), m=:circle, c=:lightgrey, lab="Empirical distribution")
-scatter!(h_faux ./ sum(h_faux), lab="Simulated data")
