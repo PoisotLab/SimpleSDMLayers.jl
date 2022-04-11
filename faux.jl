@@ -8,13 +8,13 @@ using StatsBase
 using BenchmarkTools
 
 # One layer
-_bbox = (left=117.0, right=126.2, bottom=-6.1, top=3.3)
-elevation = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
-plot(elevation, frame=:box, c=:bamako, dpi=400)
+_bbox = (left=-130.0, right=-115.0, bottom=32.0, top=56.0)
+layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
+plot(layer, frame=:box, c=:bamako, dpi=400)
 
 # Occurrences
 observations = occurrences(
-    GBIF.taxon("Draco beccarii"; strict=true),
+    GBIF.taxon("Hypomyces lactifluorum"; strict=true),
     "hasCoordinate" => "true",
     "decimalLatitude" => (_bbox.bottom, _bbox.top),
     "decimalLongitude" => (_bbox.left, _bbox.right),
@@ -43,7 +43,8 @@ end
 Bin a distance matrix, where m is the maximum distance allowed
 """
 function bin_distances(D, m)
-    return fit(Histogram, vec(D) ./ m, LinRange(0.0, 1.0, 10)).weights
+    w = fit(Histogram, vec(D)./m, LinRange(0.0, 1.0, 20)).weights
+    return w ./ sum(w)
 end
 
 """
@@ -92,20 +93,28 @@ function _initial_proposition(layer, xy, D)
         invalid = true
         while invalid
             proposition = randompoint(rand(xy), rand(D))
-            invalid = isnothing(layer[proposition...])
+            all_points[i] = proposition
+            invalid = isnothing(layer[proposition...]) || (maximum(distance_matrix(all_points[1:i])) > maximum(D))
         end
-        all_points[i] = proposition
     end
     return all_points
 end
 
-function _points_distance(mocks, m, b)
-    mD = distance_matrix(mocks)
-    mb = bin_distances(mD, m)
-    return kl_divergence(mb, b)
+"""
+Returns the Jensen-Shannon distance (i.e. the square root of the divergence) for
+the two distance matrices. This version is prefered to the KL divergence in the
+original implementation as it prevents the `Inf` values when p(x)=0 and q(x)>0.
+The JS divergences is bounded between 0 and the natural log of 2, which gives an
+absolute measure of fit allowing to compare the solutions.
+"""
+function _points_distance(x, y)
+    m = max(maximum(x), maximum(y))
+    p = bin_distances(x, m)
+    q = bin_distances(y, m)
+    return sqrt(js_divergence(p, q)/log(2))
 end
 
-function _improve_one_point!(mocks, layer, D, b, d0)
+function _improve_one_point!(mocks, layer, D, d0)
     random_point = rand(eachindex(mocks))
     current = mocks[random_point]
     global proposition
@@ -122,7 +131,7 @@ function _improve_one_point!(mocks, layer, D, b, d0)
             return d0
         end
     end
-    dt = _points_distance(mocks, maximum(D), b)
+    dt = _points_distance(D, distance_matrix(mocks))
     if dt < d0
         return dt
     else
@@ -131,27 +140,28 @@ function _improve_one_point!(mocks, layer, D, b, d0)
     end
 end
 
-layer = copy(elevation)
 xy = coordinates(observations, layer)
-D = distance_matrix(xy)
-b = bin_distances(D, maximum(D))
-m = maximum(D)
-mocks = _initial_proposition(layer, xy, D)
-d0 = _points_distance(mocks, m, b)
+Dx = distance_matrix(xy)
+mocks = _initial_proposition(layer, xy, Dx)
+Dy = distance_matrix(mocks)
+d0 = _points_distance(Dx, Dy)
 
 progression = zeros(Float64, 10_000)
 progression[1] = d0
 for i in 2:length(progression)
-    progression[i] = _improve_one_point!(mocks, layer, D, b, progression[i-1])
+    progression[i] = _improve_one_point!(mocks, layer, Dx, progression[i-1])
     @info "Time $(i)\t$(progression[i])"
 end
 
-plot(progression, c=:black, lab="", dpi=400, lw=2)
+plot(progression, c=:black, lab="", dpi=400, lw=2, ylab="Absolute fit", xlab="Epoch")
 
-plot(b, dpi=400, lw=0.0, fill=(0, :grey, 0.2), lab="Measured")
-plot!(bin_distances(distance_matrix(mocks), m), c=:black, lab="Simulated")
+Dx = distance_matrix(xy)
+Dy = distance_matrix(mocks)
+m = max(maximum(Dx), maximum(Dy))
+plot(bin_distances(Dx, m), dpi=400, lw=0.0, fill=(0, :grey, 0.2), lab="Measured")
+plot!(bin_distances(Dy, m), c=:black, lab="Simulated")
 
-plot(layer, frame=:box, dpi=600, c=:grey, cbar=false)
+plot(layer, frame=:box, dpi=600, c=:grey, cbar=false, legend=:bottomleft)
 scatter!(xy, c=:black, lab="Occurrences")
 scatter!(mocks, c=:white, lab="Fauxcurrences", alpha=0.7, m=:square, ms=2)
 savefig("demo.png")
