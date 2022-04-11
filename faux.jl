@@ -6,9 +6,10 @@ using Distances
 using LinearAlgebra
 using StatsBase
 using BenchmarkTools
+using ProgressMeter
 
 # One layer
-_bbox = (left=-160., right=-154.5, bottom=18.5, top=22.5)
+_bbox = (left=-160.0, right=-154.5, bottom=18.5, top=22.5)
 layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
 plot(layer, frame=:box, c=:bamako, dpi=400)
 
@@ -43,7 +44,7 @@ end
 Bin a distance matrix, where m is the maximum distance allowed
 """
 function bin_distances(D, m)
-    w = fit(Histogram, vec(D)./m, LinRange(0.0, 1.0, 20)).weights
+    w = fit(Histogram, vec(D) ./ m, LinRange(0.0, 1.0, 21)).weights
     return w ./ sum(w)
 end
 
@@ -113,7 +114,7 @@ function _points_distance(x, y)
     m = max(maximum(x), maximum(y))
     p = bin_distances(x, m)
     q = bin_distances(y, m)
-    return sqrt(js_divergence(p, q)/log(2))
+    return sqrt(js_divergence(p, q) / log(2))
 end
 
 function _improve_one_point!(mocks, layer, D, d0)
@@ -142,28 +143,34 @@ function _improve_one_point!(mocks, layer, D, d0)
     end
 end
 
-xy = coordinates(observations, layer)
+xy = unique(coordinates(observations, layer))
 Dx = distance_matrix(xy)
 mocks = _initial_proposition(layer, xy, Dx)
 Dy = distance_matrix(mocks)
 d0 = _points_distance(Dx, Dy)
 
-progression = zeros(Float64, 10_000)
+progression = zeros(Float64, 1_000_000)
 progression[1] = d0
 for i in 2:length(progression)
     progression[i] = _improve_one_point!(mocks, layer, Dx, progression[i-1])
-    @info "Time $(i)\t$(progression[i])"
+    @info "Current d₀:\t$(progression[i])"
+    if progression[i] < 0.01
+        @info "Breaking after $(i) iterations"
+        break
+    end
 end
 
-plot(progression, c=:black, lab="", dpi=400, lw=2, ylab="Absolute fit", xlab="Epoch")
+plot(progression, c=:black, lab="", dpi=400, lw=2, ylab="Absolute fit", xlab="Epoch", xlim=(0, length(progression)))
 
 Dx = distance_matrix(xy)
 Dy = distance_matrix(mocks)
 m = max(maximum(Dx), maximum(Dy))
 plot(bin_distances(Dx, m), dpi=400, lw=0.0, fill=(0, :grey, 0.2), lab="Measured")
 plot!(bin_distances(Dy, m), c=:black, lab="Simulated")
+xaxis!("Distance bin", 1:19)
+yaxis!("Density", (0, 0.5))
 
-plot(layer, frame=:box, dpi=600, c=:grey, cbar=false, legend=:bottomleft)
-scatter!(xy, c=:black, lab="Occurrences")
+plot(layer, frame=:grid, dpi=600, c=:grey, cbar=false, legend=:bottomleft)
 scatter!(mocks, c=:white, lab="Fauxcurrences", alpha=0.7, m=:square, ms=2)
+scatter!(xy, c=:black, lab="Occurrences")
 savefig("demo.png")
