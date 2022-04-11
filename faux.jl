@@ -8,21 +8,6 @@ using StatsBase
 using BenchmarkTools
 using ProgressMeter
 
-# One layer
-_bbox = (left=-160.0, right=-154.5, bottom=18.5, top=22.5)
-layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
-plot(layer, frame=:box, c=:bamako, dpi=400)
-
-# Occurrences
-observations = occurrences(
-    GBIF.taxon("Himatione sanguinea"; strict=true),
-    "hasCoordinate" => "true",
-    "decimalLatitude" => (_bbox.bottom, _bbox.top),
-    "decimalLongitude" => (_bbox.left, _bbox.right),
-    "limit" => 300,
-)
-occurrences!(observations)
-
 """
 Get the coordinates for a list of observations, filtering the ones that do not
 correspond to valid layer positions
@@ -30,7 +15,7 @@ correspond to valid layer positions
 function coordinates(observations, layer)
     xy = [(observations[i].longitude, observations[i].latitude) for i in 1:length(observations)]
     filter!(c -> !isnothing(layer[c...]), xy)
-    return xy
+    return hcat(collect.(unique(xy))...)
 end
 
 """
@@ -143,30 +128,53 @@ function _improve_one_point!(mocks, layer, D, d0)
     end
 end
 
-xy = unique(coordinates(observations, layer))
-Dx = distance_matrix(xy)
-mocks = _initial_proposition(layer, xy, Dx)
-Dy = distance_matrix(mocks)
-d0 = _points_distance(Dx, Dy)
-
-progression = zeros(Float64, 1_000_000)
-progression[1] = d0
-for i in 2:length(progression)
-    progression[i] = _improve_one_point!(mocks, layer, Dx, progression[i-1])
-    @info "Current d₀:\t$(progression[i])"
-    if progression[i] < 0.01
-        @info "Breaking after $(i) iterations"
-        break
+function fauxcurrence(layer, xy::Vector{Tuple{Float64,Float64}}; stop_at=0.01, max_iter=10_000)
+    Dx = distance_matrix(xy)
+    mocks = _initial_proposition(layer, xy, Dx)
+    Dy = distance_matrix(mocks)
+    d0 = _points_distance(Dx, Dy)
+    for i in 1:max_iter
+        d0 = _improve_one_point!(mocks, layer, Dx, d0)
+        @info "Current d₀:\t$(progression[i])"
+        if progression[i] < stop_at
+            @info "Breaking after $(i) iterations"
+            break
+        end
     end
+    return mocks
 end
 
-endat = findfirst(iszero, progression)-1
-plot(progression[1:endat], c=:black, lab="", dpi=400, lw=2, ylab="Absolute fit", xlab="Epoch", xlim=(1, endat))
+
+# One layer
+_bbox = (left=-160.0, right=-154.5, bottom=18.5, top=22.5)
+layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
+plot(layer, frame=:box, c=:bamako, dpi=400)
+
+# Occurrences
+t1 = GBIF.taxon("Himatione sanguinea"; strict=true)
+t2 = GBIF.taxon("Paroaria capitata"; strict=true)
+t3 = GBIF.taxon("Pluvialis fulva"; strict=true)
+
+observations = []
+for t in [t1, t2, t3]
+    obs =  occurrences(t,
+        "hasCoordinate" => "true",
+        "decimalLatitude" => (_bbox.bottom, _bbox.top),
+        "decimalLongitude" => (_bbox.left, _bbox.right),
+        "limit" => 300)
+     push!(observations, obs)
+end
+
+xy = [coordinates(obs, layer) for obs in observations]
+
+pairwise(Haversine(6371.0), xy[1], xy[2])
+
+mocks = fauxcurrence(layer, xy)
 
 Dx = distance_matrix(xy)
 Dy = distance_matrix(mocks)
 m = max(maximum(Dx), maximum(Dy))
-plot(bin_distances(Dx, m), dpi=400, lw=1.0, c=:white, lab="Measured", lc=:black, m=:circle)
+plot(bin_distances(Dx, m), dpi=600, lw=1.0, c=:white, lab="Measured", lc=:black, m=:circle)
 scatter!(bin_distances(Dy, m), c=:black, lab="Simulated", ms=3, m=:diamond)
 xaxis!("Distance bin", 1:20)
 yaxis!("Density", (0, 0.5))
