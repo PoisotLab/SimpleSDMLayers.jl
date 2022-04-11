@@ -23,12 +23,12 @@ end
 """
 Bin a distance matrix, where m is the maximum distance allowed
 """
-function bin_distances(D, m)
+function bin_distances(D::Matrix{Float64}, m::Float64)::Vector{Float64}
     bins = 20
-    r = LinRange(0.0, m+eps(), bins+1)
-    c = zeros(Float64, length(r))
+    r = LinRange(0.0, m+eps(typeof(m)), bins+1)
+    c = zeros(eltype(D), bins)
     for i in 1:bins
-        c[i] = count(D .<= r[i+1])
+        c[i] = count(D .< r[i+1])
         if i > 1
             c[i] = c[i] - sum(c[1:(i-1)])
         end
@@ -173,7 +173,7 @@ JSinter = [distribution_distance(obs_inter_matrices[i], sim_inter_matrices[i]) f
 JS = vcat(JSintra, JSinter)
 optimum = mean(JS)
 
-progress = zeros(Float64, 100)
+progress = zeros(Float64, 10_000)
 scores = zeros(Float64, (length(JS), length(progress)))
 scores[:, 1] .= JS
 progress[1] = optimum
@@ -213,7 +213,7 @@ progress[1] = optimum
 
     if d0 < optimum
         optimum = d0
-        @info optimum
+        @info "t = $(lpad(i, 8)) λ = $(round(optimum; digits=4))"
     else
         sim[set_to_change][:, point_to_change] .= current_point
     end
