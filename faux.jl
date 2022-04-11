@@ -25,7 +25,7 @@ Bin a distance matrix, where m is the maximum distance allowed
 """
 function bin_distances(D::Matrix{Float64}, m::Float64)::Vector{Float64}
     bins = 20
-    r = LinRange(0.0, m+eps(typeof(m)), bins+1)
+    r = LinRange(0.0, m + eps(typeof(m)), bins + 1)
     c = zeros(eltype(D), bins)
     for i in 1:bins
         c[i] = count(D .< r[i+1])
@@ -33,7 +33,7 @@ function bin_distances(D::Matrix{Float64}, m::Float64)::Vector{Float64}
             c[i] = c[i] - sum(c[1:(i-1)])
         end
     end
-    return c./sum(c)
+    return c ./ sum(c)
 end
 
 """
@@ -107,17 +107,18 @@ function distribution_distance(x, y)
     return sqrt(js_divergence(p, q) / log(2))
 end
 
-#=
 _bbox = (left=-80.0, right=-65.0, bottom=44.0, top=50.0)
 layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
 plot(layer, frame=:box, c=:bamako, dpi=400)
 taxa = [
     GBIF.taxon("Canis latrans"; strict=true),
     GBIF.taxon("Alces alces"; strict=true),
-    GBIF.taxon("Didelphis virginiana"; strict=true)
+    GBIF.taxon("Didelphis virginiana"; strict=true),
+    GBIF.taxon("Vulpes vulpes"; strict=true),
+    GBIF.taxon("Ursus americanus"; strict=true)
 ]
-=#
 
+#=
 # Hawaii example
 _bbox = (left=-160.0, right=-154.5, bottom=18.5, top=22.5)
 layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
@@ -128,6 +129,7 @@ taxa = [
     GBIF.taxon("Pluvialis fulva"; strict=true),
     GBIF.taxon("Pandion haliaetus"; strict=true)
 ]
+=#
 
 observations = []
 for t in taxa
@@ -135,9 +137,7 @@ for t in taxa
         "hasCoordinate" => "true",
         "decimalLatitude" => (_bbox.bottom, _bbox.top),
         "decimalLongitude" => (_bbox.left, _bbox.right),
-        "limit" => 300)
-    occurrences!(obs)
-    occurrences!(obs)
+        "limit" => 100)
     push!(observations, obs)
 end
 
@@ -176,12 +176,12 @@ JSinter = [distribution_distance(obs_inter_matrices[i], sim_inter_matrices[i]) f
 JS = vcat(JSintra, JSinter)
 optimum = mean(JS)
 
-progress = zeros(Float64, 10_000)
+progress = zeros(Float64, 20_000)
 scores = zeros(Float64, (length(JS), length(progress)))
 scores[:, 1] .= JS
 progress[1] = optimum
 
-@profview for i in 2:length(progress)
+for i in 2:length(progress)
     # Get a random set of points to change
     set_to_change = rand(1:length(sim))
 
@@ -200,7 +200,7 @@ progress[1] = optimum
     for i in 1:(length(sim)-1)
         for j in (i+1):length(sim)
             # Only update the matrices for which there was a change
-            if (i == set_to_change)|(j == set_to_change)
+            if (i == set_to_change) | (j == set_to_change)
                 pairwise!(sim_inter_matrices[cursor], Df, sim[i], sim[j])
             end
             cursor += 1
@@ -224,13 +224,14 @@ progress[1] = optimum
 end
 
 # Performance change plot
-plot(scores', lab="", frame=:box)
+plot(scores[1:length(sim),:]', lab="", frame=:box, c=:grey)
+plot!(scores[(length(sim)+1):end, :]', lab="", c=:lightgrey)
 plot!(progress, c=:black, lw=2, lab="Overall")
 xaxis!("Iteration step")
 yaxis!("Absolute performance")
 
 # Map
-p = [plot(layer, frame=:grid, c=:grey, cbar=false, legend=:bottomleft, size=(700, 300), dpi=600) for i in 1:length(sim), j in 1:2]
+p = [plot(layer, frame=:grid, c=:grey, cbar=false, legend=:bottomleft, size=(800, 600), dpi=600) for i in 1:length(sim), j in 1:2]
 c = distinguishable_colors(length(sim) + 4)[(end-length(sim)+1):end]
 for i in 1:length(sim)
     scatter!(p[i, 1], obs[i][1, :], obs[i][2, :], lab="", ms=2, c=c[i], msw=0.0)
