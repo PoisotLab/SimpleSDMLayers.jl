@@ -24,8 +24,16 @@ end
 Bin a distance matrix, where m is the maximum distance allowed
 """
 function bin_distances(D, m)
-    w = fit(Histogram, vec(D) ./ m, LinRange(0.0, 1.0, 21)).weights
-    return w ./ sum(w)
+    bins = 20
+    r = LinRange(0.0, m+eps(), bins+1)
+    c = zeros(Float64, length(r))
+    for i in 1:bins
+        c[i] = count(D .<= r[i+1])
+        if i > 1
+            c[i] = c[i] - sum(c[1:(i-1)])
+        end
+    end
+    return c./sum(c)
 end
 
 """
@@ -97,6 +105,16 @@ function distribution_distance(x, y)
 end
 
 #=
+_bbox = (left=-80.0, right=-65.0, bottom=44.0, top=50.0)
+layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
+plot(layer, frame=:box, c=:bamako, dpi=400)
+taxa = [
+    GBIF.taxon("Canis latrans"; strict=true),
+    GBIF.taxon("Alces alces"; strict=true),
+    GBIF.taxon("Didelphis virginiana"; strict=true)
+]
+=#
+
 # Hawaii example
 _bbox = (left=-160.0, right=-154.5, bottom=18.5, top=22.5)
 layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
@@ -106,16 +124,6 @@ taxa = [
     GBIF.taxon("Paroaria capitata"; strict=true),
     GBIF.taxon("Pluvialis fulva"; strict=true),
     GBIF.taxon("Pandion haliaetus"; strict=true)
-]
-=#
-
-_bbox = (left=-80.0, right=-65.0, bottom=44.0, top=50.0)
-layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
-plot(layer, frame=:box, c=:bamako, dpi=400)
-taxa = [
-    GBIF.taxon("Canis latrans"; strict=true),
-    GBIF.taxon("Alces alces"; strict=true),
-    GBIF.taxon("Didelphis virginiana"; strict=true)
 ]
 
 observations = []
@@ -139,7 +147,7 @@ for i in 1:length(obs)
 end
 cursor = 1
 for i in 1:(length(obs)-1)
-    for j in (i+1):length(xy)
+    for j in (i+1):length(obs)
         pairwise!(obs_inter_matrices[cursor], Df, obs[i], obs[j])
         cursor += 1
     end
@@ -154,7 +162,7 @@ for i in 1:length(sim)
 end
 cursor = 1
 for i in 1:(length(sim)-1)
-    for j in (i+1):length(xy)
+    for j in (i+1):length(sim)
         pairwise!(sim_inter_matrices[cursor], Df, sim[i], sim[j])
         cursor += 1
     end
@@ -187,8 +195,11 @@ progress[1] = optimum
     pairwise!(sim_intra_matrices[set_to_change], Df, sim[set_to_change])
     cursor = 1
     for i in 1:(length(sim)-1)
-        for j in (i+1):length(xy)
-            pairwise!(sim_inter_matrices[cursor], Df, sim[i], sim[j])
+        for j in (i+1):length(sim)
+            # Only update the matrices for which there was a change
+            if (i == set_to_change)|(j == set_to_change)
+                pairwise!(sim_inter_matrices[cursor], Df, sim[i], sim[j])
+            end
             cursor += 1
         end
     end
