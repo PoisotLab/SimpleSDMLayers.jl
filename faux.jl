@@ -8,13 +8,13 @@ using StatsBase
 using BenchmarkTools
 
 # One layer
-_bbox = (left=-130.0, right=-115.0, bottom=32.0, top=56.0)
+_bbox = (left=-160., right=-154.5, bottom=18.5, top=22.5)
 layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
 plot(layer, frame=:box, c=:bamako, dpi=400)
 
 # Occurrences
 observations = occurrences(
-    GBIF.taxon("Hypomyces lactifluorum"; strict=true),
+    GBIF.taxon("Himatione sanguinea"; strict=true),
     "hasCoordinate" => "true",
     "decimalLatitude" => (_bbox.bottom, _bbox.top),
     "decimalLongitude" => (_bbox.left, _bbox.right),
@@ -105,7 +105,9 @@ Returns the Jensen-Shannon distance (i.e. the square root of the divergence) for
 the two distance matrices. This version is prefered to the KL divergence in the
 original implementation as it prevents the `Inf` values when p(x)=0 and q(x)>0.
 The JS divergences is bounded between 0 and the natural log of 2, which gives an
-absolute measure of fit allowing to compare the solutions.
+absolute measure of fit allowing to compare the solutions. Note that the value
+returned is *already* corrected, so it can be at most 1.0, and at best
+(identical matrices) 0.
 """
 function _points_distance(x, y)
     m = max(maximum(x), maximum(y))
