@@ -139,18 +139,30 @@ function fauxcurrence(layer, xy::Vector{Tuple{Float64,Float64}}; stop_at=0.01, m
 end
 
 
-# One layer
+#=
+# Hawaii example
 _bbox = (left=-160.0, right=-154.5, bottom=18.5, top=22.5)
 layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
 plot(layer, frame=:box, c=:bamako, dpi=400)
+taxa = [
+    GBIF.taxon("Himatione sanguinea"; strict=true),
+    GBIF.taxon("Paroaria capitata"; strict=true),
+    GBIF.taxon("Pluvialis fulva"; strict=true),
+    GBIF.taxon("Pandion haliaetus"; strict=true)
+]
+=#
 
-# Occurrences
-t1 = GBIF.taxon("Himatione sanguinea"; strict=true)
-t2 = GBIF.taxon("Paroaria capitata"; strict=true)
-t3 = GBIF.taxon("Pluvialis fulva"; strict=true)
+_bbox = (left=-80.0, right=-56.0, bottom=44.0, top=62.0)
+layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
+plot(layer, frame=:box, c=:bamako, dpi=400)
+taxa = [
+    GBIF.taxon("Vulpes vulpes"; strict=true),
+    GBIF.taxon("Urocyon cinereoargenteus"; strict=true),
+    GBIF.taxon("Vulpes lagopus"; strict=true)
+]
 
 observations = []
-for t in [t1, t2, t3]
+for t in taxa
     obs = occurrences(t,
         "hasCoordinate" => "true",
         "decimalLatitude" => (_bbox.bottom, _bbox.top),
@@ -164,7 +176,10 @@ Dxy = [pairwise(Df, xy[i]) for i in 1:length(xy)]
 fc = [generate_initial_points(layer, xy[i], Dxy[i]) for i in 1:length(xy)]
 Dfc = [pairwise(Df, xy[i], fc[i]) for i in 1:length(fc)]
 JS = [distribution_distance(Dxy[i], Dfc[i]) for i in 1:length(fc)]
-optimum = mean(JS)
+Dij = [pairwise(Df, xy[i], xy[j]) for i in 1:(length(xy)-1) for j in (i+1):length(xy)]
+Dkl = [pairwise(Df, fc[i], fc[j]) for i in 1:(length(xy)-1) for j in (i+1):length(xy)]
+JSp = [distribution_distance(Dij[i], Dkl[i]) for i in 1:length(Dij)]
+optimum = mean(vcat(JS, JSp))
 
 progress = zeros(Float64, 10_000)
 progress[1] = optimum
@@ -185,15 +200,23 @@ for i in 2:length(progress)
     # Get the pairwise distance matrices
     Dfc = [pairwise(Df, xy[i], fc[i]) for i in 1:length(fc)]
     JS = [distribution_distance(Dxy[i], Dfc[i]) for i in 1:length(fc)]
-    d0 = mean(JS)
+
+    # Same with the pairwise inter-specific distances
+    Dij = [pairwise(Df, xy[i], xy[j]) for i in 1:(length(xy)-1) for j in (i+1):length(xy)]
+    Dkl = [pairwise(Df, fc[i], fc[j]) for i in 1:(length(xy)-1) for j in (i+1):length(xy)]
+    JSp = [distribution_distance(Dij[i], Dkl[i]) for i in 1:length(Dij)]
+    d0 = mean(vcat(JS, JSp))
+
     if d0 < optimum
         optimum = d0
         @info optimum
     else
-        fc[set_to_change][:,point_to_change] .= current_point
+        fc[set_to_change][:, point_to_change] .= current_point
     end
     progress[i] = optimum
 end
+
+plot(progress)
 
 Dx = distance_matrix(xy)
 Dy = distance_matrix(mocks)
@@ -203,9 +226,11 @@ scatter!(bin_distances(Dy, m), c=:black, lab="Simulated", ms=3, m=:diamond)
 xaxis!("Distance bin", 1:20)
 yaxis!("Density", (0, 0.5))
 
-plot(layer, frame=:grid, dpi=600, c=:grey, cbar=false, legend=:bottomleft)
-scatter!(xy[1][1,:], xy[1][2,:], c=:white, lab="Species 1", alpha=0.7, m=:square, ms=2)
-scatter!(fc[1][1, :], fc[1][2, :], c=:white, lab="Species 1", alpha=0.7, m=:square, ms=2)
-scatter!(xy, c=:black, lab="Occurrences")
+p = [plot(layer, frame=:grid, c=:grey, cbar=false, legend=:bottomleft, size=(700, 300), dpi=600) for i in 1:length(xy), j in 1:2]
+c = distinguishable_colors(length(xy) + 4)[(end-length(xy)+1):end]
+for i in 1:length(xy)
+    scatter!(p[i, 1], xy[i][1, :], xy[i][2, :], lab="", ms=2, c=c[i], msw=0.0)
+    scatter!(p[i, 2], fc[i][1, :], fc[i][2, :], lab="", ms=2, c=c[i], msw=0.0, m=:diamond)
+end
+plot(p..., layout=(2, length(xy)))
 savefig("demo.png")
-
