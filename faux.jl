@@ -107,7 +107,7 @@ function distribution_distance(x, y)
     return sqrt(js_divergence(p, q) / log(2))
 end
 
-_bbox = (left=-80.0, right=-65.0, bottom=44.0, top=50.0)
+_bbox = (left=-75.0, right=-65.0, bottom=40.0, top=50.0)
 layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
 plot(layer, frame=:box, c=:bamako, dpi=400)
 taxa = [
