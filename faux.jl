@@ -8,6 +8,8 @@ using StatsBase
 using BenchmarkTools
 using ProgressMeter
 
+Df = Distances.Haversine(6371.0)
+
 """
 Get the coordinates for a list of observations, filtering the ones that do not
 correspond to valid layer positions
@@ -16,13 +18,6 @@ function coordinates(observations, layer)
     xy = [(observations[i].longitude, observations[i].latitude) for i in 1:length(observations)]
     filter!(c -> !isnothing(layer[c...]), xy)
     return hcat(collect.(unique(xy))...)
-end
-
-"""
-Get the distance between points as a matrix
-"""
-function distance_matrix(xy; D=Distances.Haversine(6371.0))
-    return pairwise(D, xy)
 end
 
 """
@@ -53,34 +48,33 @@ function randompoint(ref, d; R=6371.0)
 end
 
 """
-Get a random point given a layer and the observed distance matrix
+layer - for ref
+xy - points
+Dxy - distances
 """
-function initial_point(layer, D; R=6371.0)
+function new_random_point(layer, xy, Dxy)
     invalid = true
-    global random_destination
+    global point
     while invalid
-        # Get a random distance
-        random_distance = rand(D)
-        random_starting_point = rand(keys(layer))
-        random_destination = randompoint(random_starting_point, random_distance; R=R)
-        invalid = isnothing(layer[random_destination...])
+        point = randompoint(xy[:, rand(1:size(xy, 2))], rand(Dxy))
+        invalid = isnothing(layer[point...])
     end
-    return random_destination
+    return point
 end
 
 """
 Generates the initial proposition for points
 """
-function _initial_proposition(layer, xy, D)
-    i0 = initial_point(layer, D)
-    all_points = fill(i0, length(xy))
-    for i in 2:length(xy)
-        global proposition
+function generate_initial_points(layer, xy, Dxy)
+    all_points = copy(xy)
+    all_points[:, 1] .= new_random_point(layer, xy, Dxy)
+    for i in 2:size(xy, 2)
+        global point
         invalid = true
         while invalid
-            proposition = randompoint(rand(xy), rand(D))
-            all_points[i] = proposition
-            invalid = isnothing(layer[proposition...]) || (maximum(distance_matrix(all_points[1:i])) > maximum(D))
+            point = new_random_point(layer, all_points[:, 1:(i-1)], Dxy)
+            all_points[:, i] .= point
+            invalid = maximum(pairwise(Df, all_points[:, 1:i])) > maximum(Dxy)
         end
     end
     return all_points
@@ -95,7 +89,7 @@ absolute measure of fit allowing to compare the solutions. Note that the value
 returned is *already* corrected, so it can be at most 1.0, and at best
 (identical matrices) 0.
 """
-function _points_distance(x, y)
+function distribution_distance(x, y)
     m = max(maximum(x), maximum(y))
     p = bin_distances(x, m)
     q = bin_distances(y, m)
@@ -157,19 +151,49 @@ t3 = GBIF.taxon("Pluvialis fulva"; strict=true)
 
 observations = []
 for t in [t1, t2, t3]
-    obs =  occurrences(t,
+    obs = occurrences(t,
         "hasCoordinate" => "true",
         "decimalLatitude" => (_bbox.bottom, _bbox.top),
         "decimalLongitude" => (_bbox.left, _bbox.right),
         "limit" => 300)
-     push!(observations, obs)
+    push!(observations, obs)
 end
 
 xy = [coordinates(obs, layer) for obs in observations]
+Dxy = [pairwise(Df, xy[i]) for i in 1:length(xy)]
+fc = [generate_initial_points(layer, xy[i], Dxy[i]) for i in 1:length(xy)]
+Dfc = [pairwise(Df, xy[i], fc[i]) for i in 1:length(fc)]
+JS = [distribution_distance(Dxy[i], Dfc[i]) for i in 1:length(fc)]
+optimum = mean(JS)
 
-pairwise(Haversine(6371.0), xy[1], xy[2])
+progress = zeros(Float64, 10_000)
+progress[1] = optimum
 
-mocks = fauxcurrence(layer, xy)
+for i in 2:length(progress)
+    # Get a random set of points to change
+    set_to_change = rand(1:length(fc))
+
+    # Get a random point to change in the layer
+    point_to_change = rand(1:size(fc[set_to_change], 2))
+
+    # Save the old point
+    current_point = fc[set_to_change][:, point_to_change]
+
+    # Generate a new proposition
+    fc[set_to_change][:, point_to_change] .= new_random_point(layer, current_point, Dxy[set_to_change])
+
+    # Get the pairwise distance matrices
+    Dfc = [pairwise(Df, xy[i], fc[i]) for i in 1:length(fc)]
+    JS = [distribution_distance(Dxy[i], Dfc[i]) for i in 1:length(fc)]
+    d0 = mean(JS)
+    if d0 < optimum
+        optimum = d0
+        @info optimum
+    else
+        fc[set_to_change][:,point_to_change] .= current_point
+    end
+    progress[i] = optimum
+end
 
 Dx = distance_matrix(xy)
 Dy = distance_matrix(mocks)
@@ -180,7 +204,8 @@ xaxis!("Distance bin", 1:20)
 yaxis!("Density", (0, 0.5))
 
 plot(layer, frame=:grid, dpi=600, c=:grey, cbar=false, legend=:bottomleft)
-scatter!(mocks, c=:white, lab="Fauxcurrences", alpha=0.7, m=:square, ms=2)
+scatter!(xy[1][1,:], xy[1][2,:], c=:white, lab="Species 1", alpha=0.7, m=:square, ms=2)
+scatter!(fc[1][1, :], fc[1][2, :], c=:white, lab="Species 1", alpha=0.7, m=:square, ms=2)
 scatter!(xy, c=:black, lab="Occurrences")
 savefig("demo.png")
 
