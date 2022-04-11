@@ -136,7 +136,7 @@ for t in taxa
         "hasCoordinate" => "true",
         "decimalLatitude" => (_bbox.bottom, _bbox.top),
         "decimalLongitude" => (_bbox.left, _bbox.right),
-        "limit" => 100)
+        "limit" => 300)
     push!(observations, obs)
 end
 
@@ -199,7 +199,7 @@ for i in 2:length(progress)
     for i in 1:(length(sim)-1)
         for j in (i+1):length(sim)
             # Only update the matrices for which there was a change
-            if (i == set_to_change) | (j == set_to_change)
+            if (i == set_to_change) || (j == set_to_change)
                 pairwise!(sim_inter_matrices[cursor], Df, sim[i], sim[j])
             end
             cursor += 1
