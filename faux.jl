@@ -175,7 +175,7 @@ JSinter = [distribution_distance(obs_inter_matrices[i], sim_inter_matrices[i]) f
 JS = vcat(JSintra, JSinter)
 optimum = mean(JS)
 
-progress = zeros(Float64, 20_000)
+progress = zeros(Float64, 200_000)
 scores = zeros(Float64, (length(JS), length(progress)))
 scores[:, 1] .= JS
 progress[1] = optimum
