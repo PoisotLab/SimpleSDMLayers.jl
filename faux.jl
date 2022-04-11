@@ -152,13 +152,13 @@ taxa = [
 ]
 =#
 
-_bbox = (left=-80.0, right=-56.0, bottom=44.0, top=62.0)
+_bbox = (left=-80.0, right=-65.0, bottom=44.0, top=50.0)
 layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., resolution=0.5))
 plot(layer, frame=:box, c=:bamako, dpi=400)
 taxa = [
-    GBIF.taxon("Vulpes vulpes"; strict=true),
-    GBIF.taxon("Urocyon cinereoargenteus"; strict=true),
-    GBIF.taxon("Vulpes lagopus"; strict=true)
+    GBIF.taxon("Canis latrans"; strict=true),
+    GBIF.taxon("Alces alces"; strict=true),
+    GBIF.taxon("Didelphis virginiana"; strict=true)
 ]
 
 observations = []
@@ -168,25 +168,54 @@ for t in taxa
         "decimalLatitude" => (_bbox.bottom, _bbox.top),
         "decimalLongitude" => (_bbox.left, _bbox.right),
         "limit" => 300)
+    occurrences!(obs)
+    occurrences!(obs)
     push!(observations, obs)
 end
 
-xy = [coordinates(obs, layer) for obs in observations]
-Dxy = [pairwise(Df, xy[i]) for i in 1:length(xy)]
-fc = [generate_initial_points(layer, xy[i], Dxy[i]) for i in 1:length(xy)]
-Dfc = [pairwise(Df, xy[i], fc[i]) for i in 1:length(fc)]
-JS = [distribution_distance(Dxy[i], Dfc[i]) for i in 1:length(fc)]
-Dij = [pairwise(Df, xy[i], xy[j]) for i in 1:(length(xy)-1) for j in (i+1):length(xy)]
-Dkl = [pairwise(Df, fc[i], fc[j]) for i in 1:(length(xy)-1) for j in (i+1):length(xy)]
-JSp = [distribution_distance(Dij[i], Dkl[i]) for i in 1:length(Dij)]
-optimum = mean(vcat(JS, JSp))
+# Generate the observation distances
+obs = [coordinates(obs, layer) for obs in observations]
+obs_intra_matrices = [zeros(Float64, (size(obs[i], 2), size(obs[i], 2))) for i in 1:length(obs)]
+obs_inter_matrices = [zeros(Float64, (size(obs[i], 2), size(obs[j], 2))) for i in 1:(length(obs)-1) for j in (i+1):length(obs)]
+for i in 1:length(obs)
+    pairwise!(obs_intra_matrices[i], Df, obs[i])
+end
+cursor = 1
+for i in 1:(length(obs)-1)
+    for j in (i+1):length(xy)
+        pairwise!(obs_inter_matrices[cursor], Df, obs[i], obs[j])
+        cursor += 1
+    end
+end
 
-progress = zeros(Float64, 10_000)
+# Generate the simulation distances
+sim = [generate_initial_points(layer, obs[i], obs_intra_matrices[i]) for i in 1:length(obs)]
+sim_intra_matrices = [zeros(Float64, (size(obs[i], 2), size(obs[i], 2))) for i in 1:length(obs)]
+sim_inter_matrices = [zeros(Float64, (size(obs[i], 2), size(obs[j], 2))) for i in 1:(length(obs)-1) for j in (i+1):length(obs)]
+for i in 1:length(sim)
+    pairwise!(sim_intra_matrices[i], Df, sim[i])
+end
+cursor = 1
+for i in 1:(length(sim)-1)
+    for j in (i+1):length(xy)
+        pairwise!(sim_inter_matrices[cursor], Df, sim[i], sim[j])
+        cursor += 1
+    end
+end
+
+JSintra = [distribution_distance(obs_intra_matrices[i], sim_intra_matrices[i]) for i in 1:length(sim_intra_matrices)]
+JSinter = [distribution_distance(obs_inter_matrices[i], sim_inter_matrices[i]) for i in 1:length(sim_inter_matrices)]
+JS = vcat(JSintra, JSinter)
+optimum = mean(JS)
+
+progress = zeros(Float64, 100)
+scores = zeros(Float64, (length(JS), length(progress)))
+scores[:, 1] .= JS
 progress[1] = optimum
 
-for i in 2:length(progress)
+@profview for i in 2:length(progress)
     # Get a random set of points to change
-    set_to_change = rand(1:length(fc))
+    set_to_change = rand(1:length(sim))
 
     # Get a random point to change in the layer
     point_to_change = rand(1:size(fc[set_to_change], 2))
@@ -195,17 +224,24 @@ for i in 2:length(progress)
     current_point = fc[set_to_change][:, point_to_change]
 
     # Generate a new proposition
-    fc[set_to_change][:, point_to_change] .= new_random_point(layer, current_point, Dxy[set_to_change])
+    fc[set_to_change][:, point_to_change] .= new_random_point(layer, current_point, obs_intra_matrices[set_to_change])
 
-    # Get the pairwise distance matrices
-    Dfc = [pairwise(Df, xy[i], fc[i]) for i in 1:length(fc)]
-    JS = [distribution_distance(Dxy[i], Dfc[i]) for i in 1:length(fc)]
+    # Update the distance matrices
+    pairwise!(sim_intra_matrices[set_to_change], Df, sim[set_to_change])
+    cursor = 1
+    for i in 1:(length(sim)-1)
+        for j in (i+1):length(xy)
+            pairwise!(sim_inter_matrices[cursor], Df, sim[i], sim[j])
+            cursor += 1
+        end
+    end
 
-    # Same with the pairwise inter-specific distances
-    Dij = [pairwise(Df, xy[i], xy[j]) for i in 1:(length(xy)-1) for j in (i+1):length(xy)]
-    Dkl = [pairwise(Df, fc[i], fc[j]) for i in 1:(length(xy)-1) for j in (i+1):length(xy)]
-    JSp = [distribution_distance(Dij[i], Dkl[i]) for i in 1:length(Dij)]
-    d0 = mean(vcat(JS, JSp))
+    JSintra = [distribution_distance(obs_intra_matrices[i], sim_intra_matrices[i]) for i in 1:length(sim_intra_matrices)]
+    JSinter = [distribution_distance(obs_inter_matrices[i], sim_inter_matrices[i]) for i in 1:length(sim_inter_matrices)]
+    JS = vcat(JSintra, JSinter)
+
+    d0 = mean(JS)
+    scores[:, i] .= JS
 
     if d0 < optimum
         optimum = d0
@@ -216,16 +252,13 @@ for i in 2:length(progress)
     progress[i] = optimum
 end
 
-plot(progress)
+# Performance change plot
+plot(scores', lab="", frame=:box)
+plot!(progress, c=:black, lw=2, lab="Overall")
+xaxis!("Iteration step")
+yaxis!("Absolute performance")
 
-Dx = distance_matrix(xy)
-Dy = distance_matrix(mocks)
-m = max(maximum(Dx), maximum(Dy))
-plot(bin_distances(Dx, m), dpi=600, lw=1.0, c=:white, lab="Measured", lc=:black, m=:circle)
-scatter!(bin_distances(Dy, m), c=:black, lab="Simulated", ms=3, m=:diamond)
-xaxis!("Distance bin", 1:20)
-yaxis!("Density", (0, 0.5))
-
+# Map
 p = [plot(layer, frame=:grid, c=:grey, cbar=false, legend=:bottomleft, size=(700, 300), dpi=600) for i in 1:length(xy), j in 1:2]
 c = distinguishable_colors(length(xy) + 4)[(end-length(xy)+1):end]
 for i in 1:length(xy)
