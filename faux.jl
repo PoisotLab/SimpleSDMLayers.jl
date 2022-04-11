@@ -160,17 +160,19 @@ for i in 2:length(progression)
     end
 end
 
-plot(progression, c=:black, lab="", dpi=400, lw=2, ylab="Absolute fit", xlab="Epoch", xlim=(0, length(progression)))
+endat = findfirst(iszero, progression)-1
+plot(progression[1:endat], c=:black, lab="", dpi=400, lw=2, ylab="Absolute fit", xlab="Epoch", xlim=(1, endat))
 
 Dx = distance_matrix(xy)
 Dy = distance_matrix(mocks)
 m = max(maximum(Dx), maximum(Dy))
-plot(bin_distances(Dx, m), dpi=400, lw=0.0, fill=(0, :grey, 0.2), lab="Measured")
-plot!(bin_distances(Dy, m), c=:black, lab="Simulated")
-xaxis!("Distance bin", 1:19)
+plot(bin_distances(Dx, m), dpi=400, lw=1.0, c=:white, lab="Measured", lc=:black, m=:circle)
+scatter!(bin_distances(Dy, m), c=:black, lab="Simulated", ms=3, m=:diamond)
+xaxis!("Distance bin", 1:20)
 yaxis!("Density", (0, 0.5))
 
 plot(layer, frame=:grid, dpi=600, c=:grey, cbar=false, legend=:bottomleft)
 scatter!(mocks, c=:white, lab="Fauxcurrences", alpha=0.7, m=:square, ms=2)
 scatter!(xy, c=:black, lab="Occurrences")
 savefig("demo.png")
+
