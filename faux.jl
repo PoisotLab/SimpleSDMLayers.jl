@@ -72,6 +72,9 @@ end
 
 """
 Generates the initial proposition for points
+
+TODO: switch between using empirical points and simulated points, the later
+generates worse initial solutions
 """
 function generate_initial_points(layer, xy, Dxy)
     all_points = copy(xy)
@@ -80,7 +83,7 @@ function generate_initial_points(layer, xy, Dxy)
         global point
         invalid = true
         while invalid
-            point = new_random_point(layer, all_points[:, 1:(i-1)], Dxy)
+            point = new_random_point(layer, xy, Dxy)
             all_points[:, i] .= point
             invalid = maximum(pairwise(Df, all_points[:, 1:i])) > maximum(Dxy)
         end
@@ -227,11 +230,11 @@ xaxis!("Iteration step")
 yaxis!("Absolute performance")
 
 # Map
-p = [plot(layer, frame=:grid, c=:grey, cbar=false, legend=:bottomleft, size=(700, 300), dpi=600) for i in 1:length(xy), j in 1:2]
-c = distinguishable_colors(length(xy) + 4)[(end-length(xy)+1):end]
-for i in 1:length(xy)
-    scatter!(p[i, 1], xy[i][1, :], xy[i][2, :], lab="", ms=2, c=c[i], msw=0.0)
-    scatter!(p[i, 2], fc[i][1, :], fc[i][2, :], lab="", ms=2, c=c[i], msw=0.0, m=:diamond)
+p = [plot(layer, frame=:grid, c=:grey, cbar=false, legend=:bottomleft, size=(700, 300), dpi=600) for i in 1:length(sim), j in 1:2]
+c = distinguishable_colors(length(sim) + 4)[(end-length(sim)+1):end]
+for i in 1:length(sim)
+    scatter!(p[i, 1], obs[i][1, :], obs[i][2, :], lab="", ms=2, c=c[i], msw=0.0)
+    scatter!(p[i, 2], sim[i][1, :], sim[i][2, :], lab="", ms=2, c=c[i], msw=0.0, m=:diamond)
 end
-plot(p..., layout=(2, length(xy)))
+plot(p..., layout=(2, length(sim)))
 savefig("demo.png")
