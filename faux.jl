@@ -112,10 +112,9 @@ layer = convert(Float32, SimpleSDMPredictor(WorldClim, Elevation; _bbox..., reso
 plot(layer, frame=:box, c=:bamako, dpi=400)
 taxa = [
     GBIF.taxon("Canis latrans"; strict=true),
-    GBIF.taxon("Alces alces"; strict=true),
-    GBIF.taxon("Didelphis virginiana"; strict=true),
-    GBIF.taxon("Vulpes vulpes"; strict=true),
-    GBIF.taxon("Ursus americanus"; strict=true)
+    GBIF.taxon("Procyon lotor"; strict=true),
+    GBIF.taxon("Mus musculus"; strict=true),
+    GBIF.taxon("Lynx rufus"; strict=true)
 ]
 
 #=
