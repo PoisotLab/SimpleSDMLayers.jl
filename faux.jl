@@ -96,49 +96,6 @@ function distribution_distance(x, y)
     return sqrt(js_divergence(p, q) / log(2))
 end
 
-function _improve_one_point!(mocks, layer, D, d0)
-    random_point = rand(eachindex(mocks))
-    current = mocks[random_point]
-    global proposition
-    invalid = true
-    counter = 0
-    while invalid
-        counter += 1
-        random_distance = rand(D)
-        proposition = randompoint(mocks[random_point], random_distance)
-        mocks[random_point] = proposition
-        invalid = isnothing(layer[proposition...])
-        if counter >= 10
-            mocks[random_point] = current
-            return d0
-        end
-    end
-    dt = _points_distance(D, distance_matrix(mocks))
-    if dt < d0
-        return dt
-    else
-        mocks[random_point] = current
-        return d0
-    end
-end
-
-function fauxcurrence(layer, xy::Vector{Tuple{Float64,Float64}}; stop_at=0.01, max_iter=10_000)
-    Dx = distance_matrix(xy)
-    mocks = _initial_proposition(layer, xy, Dx)
-    Dy = distance_matrix(mocks)
-    d0 = _points_distance(Dx, Dy)
-    for i in 1:max_iter
-        d0 = _improve_one_point!(mocks, layer, Dx, d0)
-        @info "Current d₀:\t$(progression[i])"
-        if progression[i] < stop_at
-            @info "Breaking after $(i) iterations"
-            break
-        end
-    end
-    return mocks
-end
-
-
 #=
 # Hawaii example
 _bbox = (left=-160.0, right=-154.5, bottom=18.5, top=22.5)
@@ -218,13 +175,13 @@ progress[1] = optimum
     set_to_change = rand(1:length(sim))
 
     # Get a random point to change in the layer
-    point_to_change = rand(1:size(fc[set_to_change], 2))
+    point_to_change = rand(1:size(sim[set_to_change], 2))
 
     # Save the old point
-    current_point = fc[set_to_change][:, point_to_change]
+    current_point = sim[set_to_change][:, point_to_change]
 
     # Generate a new proposition
-    fc[set_to_change][:, point_to_change] .= new_random_point(layer, current_point, obs_intra_matrices[set_to_change])
+    sim[set_to_change][:, point_to_change] .= new_random_point(layer, current_point, obs_intra_matrices[set_to_change])
 
     # Update the distance matrices
     pairwise!(sim_intra_matrices[set_to_change], Df, sim[set_to_change])
@@ -247,7 +204,7 @@ progress[1] = optimum
         optimum = d0
         @info optimum
     else
-        fc[set_to_change][:, point_to_change] .= current_point
+        sim[set_to_change][:, point_to_change] .= current_point
     end
     progress[i] = optimum
 end
