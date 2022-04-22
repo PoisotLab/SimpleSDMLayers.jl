@@ -12,6 +12,7 @@ using GeometryBasics
 export Point, Polygon
 using PolygonOps
 using StatsBase
+import NetCDF
 
 # Basic types for the package
 include(joinpath("lib", "types.jl"))
@@ -38,11 +39,12 @@ include(joinpath("lib", "basics.jl"))
 export latitudes, longitudes, boundingbox, grid
 
 include(joinpath("datasets", "ascii.jl"))
+include(joinpath("datasets", "netcdf.jl"))
 include(joinpath("datasets", "geotiff.jl"))
 export geotiff
 
 include(joinpath("datasets", "types.jl"))
-export WorldClim, CHELSA, EarthEnv
+export WorldClim, CHELSA, EarthEnv, TerraClimate
 export BioClim, LandCover, HabitatHeterogeneity, Elevation, Topography
 export CMIP6, SharedSocioeconomicPathway
 export CMIP5, RepresentativeConcentrationPathway
@@ -64,6 +66,8 @@ export layernames
 
 include(joinpath("datasets", "chelsa", "download.jl"))
 include(joinpath("datasets", "chelsa", "bioclim.jl"))
+
+include(joinpath("datasets", "terraclimate", "download.jl"))
 
 include(joinpath("datasets", "worldclim", "download.jl"))
 include(joinpath("datasets", "worldclim", "bioclim.jl"))

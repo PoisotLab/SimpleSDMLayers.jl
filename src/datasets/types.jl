@@ -52,6 +52,15 @@ and `HabitatHeterogeneity` rasters.
 struct EarthEnv <: LayerProvider end
 
 """
+    TerraClimate
+
+Data from `https://www.climatologylab.org/terraclimate.html`, offering the
+`PrimaryClimate` and `DerivedClimate` layers. The `TerraClimate` dataset offers
+monthly variables.
+"""
+struct TerraClimate <: LayerProvider end
+
+"""
     BioClim
 
 A list of 19 bioclimatic variables derived from the monthly temperature and
