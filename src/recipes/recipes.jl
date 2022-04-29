@@ -26,17 +26,32 @@ test 1
     end
 end
 
-"""
-test 2
-"""
+bivariates = (
+    blue_red=(
+        grad1=ColorScheme(range(colorant"#e8e8e8", colorant"#64acbe", length=100)),
+        grad2=ColorScheme(range(colorant"#e8e8e8", colorant"#c85a5a", length=100))
+    ),
+    green_blue=(
+        grad1=ColorScheme(range(colorant"#e8e8e8", colorant"#73ae80", length=100)),
+        grad2=ColorScheme(range(colorant"#e8e8e8", colorant"#6c83b5", length=100))
+    ),
+    purple_yellow=(
+        grad1=ColorScheme(range(colorant"#e8e8e8", colorant"#9972af", length=100)),
+        grad2=ColorScheme(range(colorant"#e8e8e8", colorant"#c8b35a", length=100))
+    ),
+    purple_teal=(
+        grad1=ColorScheme(range(colorant"#e8e8e8", colorant"#be64ac", length=100)),
+        grad2=ColorScheme(range(colorant"#e8e8e8", colorant"#5ac8c8", length=100))
+    ),
+)
+
 @recipe function plot(
     l1::FT,
     l2::ST;
     classes::Int=3,
-    p0=colorant"#e8e8e8ff",
-    p1=colorant"#64acbeff",
-    p2=colorant"#c85a5aff",
     quantiles=true,
+    grad1=bivariates.blue_red.grad1,
+    grad2=bivariates.blue_red.grad2
 ) where {FT<:SimpleSDMLayer,ST<:SimpleSDMLayer}
     eltype(l1) <: Number || throw(
         ArgumentError(
@@ -55,8 +70,8 @@ test 2
         l1.grid[valid_i], l2.grid[valid_i]
     elseif get(plotattributes, :seriestype, :bivariate) in [:bivariate]
         SimpleSDMLayers._layers_are_compatible(l1, l2)
-        c1 = LinRange(p0, p1, classes)
-        c2 = LinRange(p0, p2, classes)
+        c1 = collect(grad1[LinRange(0.0, 1.0, classes)])
+        c2 = collect(grad2[LinRange(0.0, 1.0, classes)])
         breakpoints = LinRange(0.0, 1.0, classes + 1)
         if quantiles
             q1 = rescale(l1, collect(LinRange(0.0, 1.0, 10classes)))
@@ -66,19 +81,20 @@ test 2
             q2 = rescale(l2, (0.0, 1.0))
         end
         classified = similar(l1, Int)
-        cols = typeof(p0)[]
+        #cols = typeof(p0)[]
+        cols = []
         for i in 1:classes
             if isequal(classes)(i)
-                fi = (v) -> breakpoints[i] < v <= breakpoints[i + 1]
+                fi = (v) -> breakpoints[i] < v <= breakpoints[i+1]
             else
-                fi = (v) -> breakpoints[i] <= v < breakpoints[i + 1]
+                fi = (v) -> breakpoints[i] <= v < breakpoints[i+1]
             end
             m1 = broadcast(fi, q1)
             for j in 1:classes
                 if isequal(classes)(j)
-                    fj = (v) -> breakpoints[j] < v <= breakpoints[j + 1]
+                    fj = (v) -> breakpoints[j] < v <= breakpoints[j+1]
                 else
-                    fj = (v) -> breakpoints[j] <= v < breakpoints[j + 1]
+                    fj = (v) -> breakpoints[j] <= v < breakpoints[j+1]
                 end
                 m2 = broadcast(fj, q2)
                 push!(cols, ColorBlendModes.BlendMultiply(c1[i], c2[j]))
@@ -99,8 +115,8 @@ test 2
             convert(Float16, classified)
         end
     elseif get(plotattributes, :seriestype, :bivariatelegend) in [:bivariatelegend]
-        c1 = LinRange(p0, p1, classes)
-        c2 = LinRange(p0, p2, classes)
+        c1 = collect(grad1[LinRange(0.0, 1.0, classes)])
+        c2 = collect(grad2[LinRange(0.0, 1.0, classes)])
         grid --> :none
         ticks --> :none
         legend --> false
@@ -108,7 +124,7 @@ test 2
         xlims --> (1 - 0.5, classes + 0.5)
         ylims --> (1 - 0.5, classes + 0.5)
         aspect_ratio --> 1
-        cols = Vector{typeof(p0)}(undef, classes^2)
+        cols = Vector{eltype(c1)}(undef, classes^2)
         class = 1
         m = zeros(Float64, classes, classes)
         for i in 1:classes
@@ -217,7 +233,7 @@ test 2
         _fs = get(plotattributes, :annotationfontsize, 14)
         @series begin
             seriestype := :shape
-            annotations := [(-0.05, 0.0, (red, _fs, :left, 60.0)), (1.0, -0.05, (green, _fs, :right, 0.0)), (0.5+0.05, sqrt(3)/2, (blue, _fs, :left, -60.0))]
+            annotations := [(-0.05, 0.0, (red, _fs, :left, 60.0)), (1.0, -0.05, (green, _fs, :right, 0.0)), (0.5 + 0.05, sqrt(3) / 2, (blue, _fs, :left, -60.0))]
             markersize := 0
             seriescolor := hcat(shapes_colors...)
             shapes_x, shapes_y

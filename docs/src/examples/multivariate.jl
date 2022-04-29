@@ -43,29 +43,29 @@ layer3 = mask(layer1, layer3);
 # Note that you can definitely use [diverging
 # colors](https://www.personal.psu.edu/cab38/ColorSch/Schemes.html) if you want.
 # If you use colors in the RGBA format (*e.g.* `colorant"#ef0ce8c4"`), the color
-# map will account for transparency.
+# map will account for transparency. The color maps are actually passed as
+# `ColorScheme` objects from the `ColorSchemes` package. The bivariate map
+# itself is a call to plot. There are a number of color schemes defined in
+# `SimpleSDMLayers.bivariates`. Internally, this will transform the layers into
+# quantiles (determined by the `classes` keyword, defaults to 3):
 
-p0 = colorant"#e8e8e8"
-bv_pal_1 = (p0=p0, p1=colorant"#64acbe", p2=colorant"#c85a5a")
-bv_pal_2 = (p0=p0, p1=colorant"#73ae80", p2=colorant"#6c83b5")
-bv_pal_3 = (p0=p0, p1=colorant"#9972af", p2=colorant"#c8b35a")
-bv_pal_4 = (p0=p0, p1=colorant"#be64ac", p2=colorant"#5ac8c8")
-
-# The bivariate map itself is a call to plot. Internally, this will transform
-# the layers into quantiles (determined by the `classes` keyword, defaults to
-# 3):
-
-plot(layer1, layer3; st=:bivariate, bv_pal_3...)
+plot(layer1, layer3; st=:bivariate, SimpleSDMLayers.bivariates.purple_yellow...)
 
 # Note that you can use the `bivariate` shorthand as well:
 
-pl1 = bivariate(layer1, layer3; classes=3, frame=:box, bv_pal_4...)
+pl1 = bivariate(layer1, layer3; classes=3, frame=:box, SimpleSDMLayers.bivariates.green_blue...)
 xaxis!(pl1, "Longitude")
 yaxis!(pl1, "Latitude")
 
+# Note that *any* colorscheme is fair game, for example using the `MetBrewer` colors
+
+bivariate(layer1, layer3; classes=8, frame=:box, grad1=ColorSchemes.Hiroshige, grad2=ColorSchemes.Morgenstern)
+xaxis!("Longitude")
+yaxis!("Latitude")
+
 # We can repeat essentially the same process for the legend:
 
-pl2 = bivariatelegend(layer1, layer3; classes=3, bv_pal_4...)
+pl2 = bivariatelegend(layer1, layer3; classes=3, grad1=ColorSchemes.Hiroshige, grad2=ColorSchemes.Morgenstern)
 xaxis!(pl2, layernames(EarthEnv, HabitatHeterogeneity, 2))
 yaxis!(pl2, layernames(EarthEnv, LandCover, 9))
 
@@ -83,21 +83,19 @@ p1 = bivariate(
     layer1,
     layer3;
     classes=6,
-    bv_pal_2...,
     frame=:box,
-    xlim=(-24, maximum(longitudes(layer1))),
+    xlim=(-24, maximum(longitudes(layer1)))
 )
 xaxis!(p1, "Longitude")
 yaxis!(p1, "Latitude")
 p2 = bivariatelegend!(
     layer1,
     layer3;
-    bv_pal_2...,
     inset=(1, bbox(0.04, 0.05, 0.28, 0.28, :top, :left)),
     subplot=2,
     xlab=layernames(EarthEnv, HabitatHeterogeneity, 2),
     ylab=layernames(EarthEnv, LandCover, 9),
-    guidefontsize=7,
+    guidefontsize=7
 )
 
 # Using a trivariate mapping follows the same process, with layers representing
@@ -127,7 +125,7 @@ trivariatelegend(
     simplex=true,
     red="Heterogeneous",
     green="Rough",
-    blue="Urbanized",
+    blue="Urbanized"
 )
 
 # We can also combine the two elements:
@@ -139,7 +137,7 @@ tri1 = trivariate(
     xlim=(-24, maximum(longitudes(layer1))),
     frame=:grid,
     grid=false,
-    simplex=false,
+    simplex=false
 )
 xaxis!(tri1, "Longitude")
 yaxis!(tri1, "Latitude")
@@ -153,5 +151,5 @@ tri2 = trivariatelegend!(
     green="Roughness",
     blue="Urban",
     annotationfontsize=6,
-    simplex=false,
+    simplex=false
 )
