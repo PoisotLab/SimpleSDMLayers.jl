@@ -60,13 +60,15 @@ yaxis!(pl1, "Latitude")
 # Note that *any* colorscheme is fair game, in case you want to mix diverging
 # with directional:
 
-bivariate(layer1, layer3; classes=8, frame=:box, grad1=ColorSchemes.coolwarm, grad2=ColorSchemes.binary)
+bivariate(layer1, layer3; classes=12, frame=:box, grad1=ColorSchemes.tableau_orange_light, grad2=ColorSchemes.tableau_blue_green)
 xaxis!("Longitude")
 yaxis!("Latitude")
 
-# We can repeat essentially the same process for the legend:
+# We can repeat essentially the same process for the legend. In fact, inspecting
+# the legend with the correct number of classes is probably a good idea in order
+# to pick color schemes that mean something.
 
-pl2 = bivariatelegend(layer1, layer3; classes=8, grad1=ColorSchemes.coolwarm, grad2=ColorSchemes.binary)
+pl2 = bivariatelegend(layer1, layer3; classes=12, grad1=ColorSchemes.tableau_orange_light, grad2=ColorSchemes.tableau_blue_green)
 xaxis!(pl2, layernames(EarthEnv, HabitatHeterogeneity, 2))
 yaxis!(pl2, layernames(EarthEnv, LandCover, 9))
 
