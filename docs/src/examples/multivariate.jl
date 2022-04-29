@@ -57,15 +57,16 @@ pl1 = bivariate(layer1, layer3; classes=3, frame=:box, SimpleSDMLayers.bivariate
 xaxis!(pl1, "Longitude")
 yaxis!(pl1, "Latitude")
 
-# Note that *any* colorscheme is fair game, for example using the `MetBrewer` colors
+# Note that *any* colorscheme is fair game, in case you want to mix diverging
+# with directional:
 
-bivariate(layer1, layer3; classes=8, frame=:box, grad1=ColorSchemes.Hiroshige, grad2=ColorSchemes.Morgenstern)
+bivariate(layer1, layer3; classes=8, frame=:box, grad1=ColorSchemes.coolwarm, grad2=ColorSchemes.binary)
 xaxis!("Longitude")
 yaxis!("Latitude")
 
 # We can repeat essentially the same process for the legend:
 
-pl2 = bivariatelegend(layer1, layer3; classes=3, grad1=ColorSchemes.Hiroshige, grad2=ColorSchemes.Morgenstern)
+pl2 = bivariatelegend(layer1, layer3; classes=8, grad1=ColorSchemes.coolwarm, grad2=ColorSchemes.binary)
 xaxis!(pl2, layernames(EarthEnv, HabitatHeterogeneity, 2))
 yaxis!(pl2, layernames(EarthEnv, LandCover, 9))
 
