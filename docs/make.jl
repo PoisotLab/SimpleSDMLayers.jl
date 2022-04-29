@@ -1,7 +1,5 @@
 push!(LOAD_PATH, joinpath("..", "src"))
 
-ENV["SDMLAYERS_PATH"] = joinpath(homedir(), "sdmlayers_tmp")
-
 using Documenter, SimpleSDMLayers
 using GBIF
 using Statistics
@@ -18,7 +16,9 @@ for ENDING in ["examples", "sdm"]
         "credit" => false
     )
     for corefile in corefiles
-        Literate.markdown(corefile, expl; config=vignetteconfig)
+        withenv("SDMLAYERS_PATH" => joinpath(homedir(), "sdmlayers")) do
+            Literate.markdown(corefile, expl; config=vignetteconfig)
+        end
     end
 end
 

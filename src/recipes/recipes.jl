@@ -51,7 +51,8 @@ bivariates = (
     classes::Int=3,
     quantiles=true,
     grad1=bivariates.blue_red.grad1,
-    grad2=bivariates.blue_red.grad2
+    grad2=bivariates.blue_red.grad2,
+    blendmode=ColorBlendModes.BlendMultiply
 ) where {FT<:SimpleSDMLayer,ST<:SimpleSDMLayer}
     eltype(l1) <: Number || throw(
         ArgumentError(
@@ -97,7 +98,7 @@ bivariates = (
                     fj = (v) -> breakpoints[j] <= v < breakpoints[j+1]
                 end
                 m2 = broadcast(fj, q2)
-                push!(cols, ColorBlendModes.BlendMultiply(c1[i], c2[j]))
+                push!(cols, blendmode(c1[i], c2[j]))
                 m = reduce(*, [m1, m2])
                 replace!(m, false => nothing)
                 if length(m) > 0
@@ -130,7 +131,7 @@ bivariates = (
         for i in 1:classes
             for j in 1:classes
                 m[j, i] = class
-                cols[class] = ColorBlendModes.BlendMultiply(c1[i], c2[j])
+                cols[class] = blendmode(c1[i], c2[j])
                 class += 1
             end
         end

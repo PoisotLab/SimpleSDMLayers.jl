@@ -4,6 +4,7 @@ using SimpleSDMLayers
 using StatsPlots
 using StatsPlots.PlotMeasures
 using Statistics
+using ColorSchemes, ColorBlendModes
 
 # **Justification for this use case:** We can show more than one (specifically,
 # two or three) variables on a single map, using a bivariate or trivariate color
@@ -37,17 +38,15 @@ layer2 = mask(layer1, layer2);
 layer3 = mask(layer1, layer3);
 
 # Note that bivariate maps usually work best when used with 9 classes in total
-# (so 3 for each side). The next decision is to take a bivaraite color palette,
-# and the combinations below are [commonly
-# used](https://www.joshuastevens.net/cartography/make-a-bivariate-choropleth-map/).
-# Note that you can definitely use [diverging
-# colors](https://www.personal.psu.edu/cab38/ColorSch/Schemes.html) if you want.
-# If you use colors in the RGBA format (*e.g.* `colorant"#ef0ce8c4"`), the color
-# map will account for transparency. The color maps are actually passed as
-# `ColorScheme` objects from the `ColorSchemes` package. The bivariate map
-# itself is a call to plot. There are a number of color schemes defined in
-# `SimpleSDMLayers.bivariates`. Internally, this will transform the layers into
-# quantiles (determined by the `classes` keyword, defaults to 3):
+# (so 3 for each side). The next decision is to take a bivaraite color palette.
+# The color maps are actually passed as `ColorScheme` objects from the
+# `ColorSchemes` package. The bivariate map itself is a call to plot. There are
+# a number of color schemes defined in `SimpleSDMLayers.bivariates`. Internally,
+# this will transform the layers into quantiles (determined by the `classes`
+# keyword, defaults to 3). The `grad1` argument to plot defines the colors for
+# the first layer (x axis), and the `grad2` for the second layer/axis.
+# Additionally, the bivariate plotting accepts a `blendmode` argument, from
+# `ColorBlendModes`, which is by default `ColorBlendModes.BlendMultiply`.
 
 plot(layer1, layer3; st=:bivariate, SimpleSDMLayers.bivariates.purple_yellow...)
 
