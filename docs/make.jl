@@ -1,5 +1,7 @@
 push!(LOAD_PATH, joinpath("..", "src"))
 
+ENV["SDMLAYERS_PATH"] = joinpath(homedir(), "sdmlayers_tmp")
+
 using Documenter, SimpleSDMLayers
 using GBIF
 using Statistics
@@ -53,7 +55,7 @@ makedocs(
     ]
 )
 
-run(`find . -type f -size +40M -delete`)
+# run(`find . -type f -size +40M -delete`)
 
 deploydocs(
     repo = "github.com/EcoJulia/SimpleSDMLayers.jl.git",
