@@ -46,6 +46,9 @@ include(joinpath("datasets", "types.jl"))
 export WorldClim, CHELSA, EarthEnv, TerraClimate
 export BioClim, LandCover, HabitatHeterogeneity, Elevation, Topography
 export PrimaryClimateVariable, SecondaryClimateVariable
+
+# Climate change scenarios
+include(joinpath("datasets", "scenarios", "climate.jl"))
 export CMIP6, SharedSocioeconomicPathway
 export CMIP5, RepresentativeConcentrationPathway
 for s in instances(CMIP5)
