@@ -60,6 +60,9 @@ monthly variables.
 """
 struct TerraClimate <: LayerProvider end
 
+struct PrimaryClimateVariable <: LayerDataset end
+struct SecondaryClimateVariable <: LayerDataset end
+
 """
     BioClim
 
