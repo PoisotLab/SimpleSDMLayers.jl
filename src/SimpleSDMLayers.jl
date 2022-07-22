@@ -46,6 +46,7 @@ export geotiff
 include(joinpath("datasets", "types.jl"))
 export WorldClim, CHELSA, EarthEnv, TerraClimate
 export BioClim, LandCover, HabitatHeterogeneity, Elevation, Topography
+export PrimaryClimateVariable, SecondaryClimateVariable
 export CMIP6, SharedSocioeconomicPathway
 export CMIP5, RepresentativeConcentrationPathway
 for s in instances(CMIP5)
@@ -66,7 +67,6 @@ export layernames
 
 include(joinpath("datasets", "chelsa", "download.jl"))
 include(joinpath("datasets", "chelsa", "bioclim.jl"))
-
 include(joinpath("datasets", "terraclimate", "download.jl"))
 
 include(joinpath("datasets", "worldclim", "download.jl"))

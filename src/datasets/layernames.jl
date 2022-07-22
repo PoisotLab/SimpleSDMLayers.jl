@@ -83,5 +83,29 @@ function layernames(::Type{EarthEnv}, ::Type{Topography})
     )
 end
 
+function layernames(::Type{TerraClimate}, ::Type{PrimaryClimateVariable})
+    return (
+        "Maximum temperature",
+        "Minimum temperature",
+        "Vapor pressure",
+        "Precipitation accumulation",
+        "Downward surface shortwave radiation",
+        "Wind speed"
+    )
+end
+
+function layernames(::Type{TerraClimate}, ::Type{SecondaryClimateVariable})
+    return (
+        "Reference evapostranspiration",
+        "Runoff",
+        "Actual evapostranspiration",
+        "Climate water deficit",
+        "Soil moisture",
+        "Snow water equivalent",
+        "Palmer drought severity index",
+        "Vapor pressure deficit"
+    )
+end
+
 layernames(p::Type{<:LayerProvider}, d::Type{<:LayerDataset}, i::Int) = layernames(p, d)[i]
 layernames(p::Type{<:LayerProvider}, d::Type{<:LayerDataset}, i::AbstractArray) = layernames(p, d)[i]

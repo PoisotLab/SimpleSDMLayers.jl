@@ -1,4 +1,4 @@
-function _get_raster(::Type{TerraClimate}, ::Type{PrimaryClimate}, layer::Integer)
+function _get_raster(::Type{TerraClimate}, ::Type{PrimaryVariable}, layer::Integer)
     1 ≤ layer ≤ 19 || throw(ArgumentError("The layer must be between 1 and 19"))
 
     path = joinpath(SimpleSDMLayers._layers_assets_path, _rasterpath(CHELSA), _rasterpath(BioClim))
