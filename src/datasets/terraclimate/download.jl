@@ -1,4 +1,4 @@
-function _get_raster(::Type{TerraClimate}, ::Type{PrimaryClimateVariable}, layer::Integer)
+function _get_raster(::Type{TerraClimate}, ::Type{PrimaryClimateVariable}, layer::Integer; year="1958")
     1 ≤ layer ≤ length(layernames(TerraClimate, PrimaryClimateVariable)) || throw(ArgumentError("The layer must be between 1 and 19"))
 
     path = joinpath(SimpleSDMLayers._layers_assets_path, _rasterpath(TerraClimate), _rasterpath(PrimaryClimateVariable))

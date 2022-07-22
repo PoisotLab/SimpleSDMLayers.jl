@@ -161,6 +161,7 @@ Enumeration of the models from CMIP5, which can be listed with
 _rasterpath(::Type{WorldClim}) = "WorldClim"
 _rasterpath(::Type{CHELSA}) = "CHELSA"
 _rasterpath(::Type{EarthEnv}) = "EarthEnv"
+_rasterpath(::Type{TerraClimate}) = "TerraClimate"
 
 # Dataset paths
 _rasterpath(::Type{BioClim}) = "BioClim"
@@ -168,6 +169,8 @@ _rasterpath(::Type{LandCover}) = "LandCover"
 _rasterpath(::Type{HabitatHeterogeneity}) = "HabitatHeterogeneity"
 _rasterpath(::Type{Elevation}) = "Elevation"
 _rasterpath(::Type{Topography}) = "Topography"
+_rasterpath(::Type{PrimaryClimateVariable}) = "Primaries"
+_rasterpath(::Type{SecondaryClimateVariable}) = "Secondaries"
 
 # Future paths
 _rasterpath(model::CMIP6) = _rasterpath(Val{model})
