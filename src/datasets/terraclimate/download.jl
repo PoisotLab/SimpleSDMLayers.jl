@@ -1,12 +1,19 @@
-function _get_raster(::Type{TerraClimate}, ::Type{PrimaryClimateVariable}, layer::Integer; year="1958")
-    1 ≤ layer ≤ length(layernames(TerraClimate, PrimaryClimateVariable)) || throw(ArgumentError("The layer must be between 1 and 19"))
+function _get_raster(::Type{TerraClimate}, ::Type{PrimaryClimateVariable}, layer::Integer; year=1958)
+    _layer_max = length(layernames(TerraClimate, PrimaryClimateVariable))
+    1 ≤ layer ≤ _layer_max || throw(ArgumentError("The layer must be between 1 and $(_layer_max)"))
+    1958 ≤ year ≤ 2021 || throw(ArgumentError("The year must be between 1958 and 2021"))
 
     path = joinpath(SimpleSDMLayers._layers_assets_path, _rasterpath(TerraClimate), _rasterpath(PrimaryClimateVariable))
     isdir(path) || mkpath(path)
-    
-    layer = lpad(layer, 2, "0")
-    filename = "CHELSA_bio10_$(layer).tif"
-    url_root = "https://envicloud.os.zhdk.cloud.switch.ch/chelsa/chelsa_V1/climatologies/bio/"
+
+    # NOTE these are ordered as in layernames and this is very fragile
+    layercodes = [
+        "tmax", "tmin", "vp", "ppt", "srad", "ws"
+    ]
+
+
+    filename = "$(layercodes[layer])_$(year).nc"
+    url_root = "https://climate.northwestknowledge.net/TERRACLIMATE-DATA/TerraClimate_"
 
     filepath = joinpath(path, filename)
     if !(isfile(filepath))
