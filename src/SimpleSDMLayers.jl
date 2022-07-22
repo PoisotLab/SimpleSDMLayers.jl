@@ -38,10 +38,9 @@ include(joinpath("lib", "generated.jl"))
 include(joinpath("lib", "basics.jl"))
 export latitudes, longitudes, boundingbox, grid
 
-include(joinpath("datasets", "ascii.jl"))
-include(joinpath("datasets", "netcdf.jl"))
-include(joinpath("datasets", "geotiff.jl"))
-export geotiff
+include(joinpath("datasets", "readers", "ascii.jl"))
+include(joinpath("datasets", "readers", "netcdf.jl"))
+include(joinpath("datasets", "readers", "geotiff.jl"))
 
 include(joinpath("datasets", "types.jl"))
 export WorldClim, CHELSA, EarthEnv, TerraClimate
