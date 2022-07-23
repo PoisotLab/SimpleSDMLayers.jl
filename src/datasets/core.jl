@@ -22,7 +22,6 @@ _rasterpath(::Type{<:LayerProvider}) = "Providers"
 _rasterpath(::Type{<:LayerDataset}) = "Datasets"
 _rasterpath(pr::Type{<:LayerProvider}, ds::Type{<:LayerDataset}) = joinpath(_rasterpath(pr), _rasterpath(ds))
 
-
 """
     provides(::Type{<:LayerProvider}, ::Type{<:LayerDataset})
 
@@ -39,3 +38,12 @@ end
 
 layernames(p::Type{<:LayerProvider}, d::Type{<:LayerDataset}, i::Int) = layernames(p, d)[i]
 layernames(p::Type{<:LayerProvider}, d::Type{<:LayerDataset}, i::AbstractArray) = layernames(p, d)[i]
+
+# Default function to read a layer is geotiff
+_readfunction(::Type{<:LayerProvider}, ::Type{<:LayerDataset}) = SimpleSDMLayers.geotiff
+
+# Generic function to access things
+function SimpleSDMPredictor(p::Type{<:LayerProvider}, d::Type{<:LayerDataset}, pos...; kwargs...)
+    @assert SimpleSDMLayers.provides(p, d)
+    return _readfunction(p, d)(_get_data(p, d, pos...; kwargs...))
+end

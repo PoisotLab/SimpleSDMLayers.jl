@@ -1,5 +1,12 @@
 module SimpleSDMLayers
 
+# This next bit is about being able to change the path for raster assets
+# globally, which avoids duplication this argument across multiple functions.
+# Important sidenote, this now uses a temporary path, so data will be downloaded
+# anew at a new session.
+_layers_assets_path = get(ENV, "SDMLAYERS_PATH", tempname())
+isdir(_layers_assets_path) || mkpath(_layers_assets_path)
+
 using ArchGDAL
 using Downloads
 using RecipesBase
@@ -99,13 +106,6 @@ export coarsen, slidingwindow, mask, rescale!, rescale, mosaic
 
 include(joinpath("recipes", "recipes.jl"))
 export bivariate
-
-# This next bit is about being able to change the path for raster assets
-# globally, which avoids duplication this argument across multiple functions.
-# Important sidenote, this now uses a temporary path, so data will be downloaded
-# anew at a new session.
-_layers_assets_path = get(ENV, "SDMLAYERS_PATH", tempname())
-isdir(_layers_assets_path) || mkpath(_layers_assets_path)
 
 # Fixes the export of clip when GBIF or others are loaded
 export clip

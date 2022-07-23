@@ -49,3 +49,16 @@ Note also that the two-method argument does not exists for scenarios (for the
 moment). Note finally that these functions do not allow *users* to determine
 where the layers will be stored, as they are meant to access them using
 overloads of `SimpleSDMPredictor` anyways.
+
+The fourth step is to define a `_readfunction` for the layer(s), which takes the
+provider and dataset types as arguments, which is going to be either `geotiff`,
+`ascii`, or `netcdf` (unless you need to implement additional ones). The default
+is `geotiff`.
+
+The last non-user-facing step to build the interface is to write a series of
+`_get_raster` functions, which will minimally accept the provider and dataset as
+their first two arguments, then a layer if there are multiple as the third
+argument, and a series of keywords and/or scenarios for *e.g.* climate change.
+Because of the volume of data, these functions should almost always start by
+checking whether the file exists, and only download what is required. These
+functions must return a path to the layer to import.
