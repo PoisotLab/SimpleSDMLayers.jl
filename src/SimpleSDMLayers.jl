@@ -38,6 +38,8 @@ include(joinpath("lib", "generated.jl"))
 include(joinpath("lib", "basics.jl"))
 export latitudes, longitudes, boundingbox, grid
 
+include(joinpath("datasets", "core.jl"))
+
 include(joinpath("datasets", "readers", "ascii.jl"))
 include(joinpath("datasets", "readers", "netcdf.jl"))
 include(joinpath("datasets", "readers", "geotiff.jl"))
@@ -67,18 +69,20 @@ end
 include(joinpath("datasets", "layernames.jl"))
 export layernames
 
-include(joinpath("datasets", "chelsa", "download.jl"))
-include(joinpath("datasets", "chelsa", "bioclim.jl"))
-include(joinpath("datasets", "terraclimate", "download.jl"))
+#include(joinpath("datasets", "chelsa", "download.jl"))
+#include(joinpath("datasets", "chelsa", "bioclim.jl"))
 
-include(joinpath("datasets", "worldclim", "download.jl"))
-include(joinpath("datasets", "worldclim", "bioclim.jl"))
-include(joinpath("datasets", "worldclim", "elevation.jl"))
+#include(joinpath("datasets", "terraclimate", "download.jl"))
 
-include(joinpath("datasets", "earthenv", "download.jl"))
-include(joinpath("datasets", "earthenv", "landcover.jl"))
-include(joinpath("datasets", "earthenv", "habitatheterogeneity.jl"))
-include(joinpath("datasets", "earthenv", "topography.jl"))
+include(joinpath("datasets", "providers", "worldclim", "core.jl"))
+include(joinpath("datasets", "providers", "worldclim", "download.jl"))
+include(joinpath("datasets", "providers", "worldclim", "elevation.jl"))
+include(joinpath("datasets", "providers", "worldclim", "bioclim.jl"))
+
+#include(joinpath("datasets", "earthenv", "download.jl"))
+#include(joinpath("datasets", "earthenv", "landcover.jl"))
+#include(joinpath("datasets", "earthenv", "habitatheterogeneity.jl"))
+#include(joinpath("datasets", "earthenv", "topography.jl"))
 
 include(joinpath("pseudoabsences", "main.jl"))
 include(joinpath("pseudoabsences", "radius.jl"))
@@ -98,7 +102,9 @@ export bivariate
 
 # This next bit is about being able to change the path for raster assets
 # globally, which avoids duplication this argument across multiple functions.
-_layers_assets_path = get(ENV, "SDMLAYERS_PATH", "assets")
+# Important sidenote, this now uses a temporary path, so data will be downloaded
+# anew at a new session.
+_layers_assets_path = get(ENV, "SDMLAYERS_PATH", tempname())
 isdir(_layers_assets_path) || mkpath(_layers_assets_path)
 
 # Fixes the export of clip when GBIF or others are loaded
