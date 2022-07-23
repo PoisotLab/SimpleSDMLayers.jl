@@ -2,6 +2,11 @@
 provides(::Type{WorldClim}, ::Type{BioClim}) = true
 provides(::Type{WorldClim}, ::Type{Elevation}) = true
 
+# Defines where to store the layers using the two-arguments version with only the provider overloaded
+_rasterpath(::Type{WorldClim}) = "WorldClim"
+_rasterpath(::Type{WorldClim}, ::Type{BioClim}) = joinpath(_rasterpath(WorldClim), "BioClim")
+_rasterpath(::Type{WorldClim}, ::Type{Elevation}) = joinpath(_rasterpath(WorldClim), "Elevation")
+
 # Names for the layers in each dataset
 function layernames(::Type{WorldClim}, ::Type{BioClim})
     return (

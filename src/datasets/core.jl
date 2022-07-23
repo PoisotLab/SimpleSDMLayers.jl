@@ -18,6 +18,11 @@ a number of dataset types that are very broad (`LandCover`,
 """
 abstract type LayerDataset end
 
+_rasterpath(::Type{<:LayerProvider}) = "Providers"
+_rasterpath(::Type{<:LayerDataset}) = "Datasets"
+_rasterpath(pr::Type{<:LayerProvider}, ds::Type{<:LayerDataset}) = joinpath(_rasterpath(pr), _rasterpath(ds))
+
+
 """
     provides(::Type{<:LayerProvider}, ::Type{<:LayerDataset})
 

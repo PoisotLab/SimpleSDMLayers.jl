@@ -33,4 +33,19 @@ function -- by default, for any pair of provider/dataset, it will return
 
 The second step in defining a dataset provider is to define, for each pair, the
 `layernames` method, which returns **a tuple of strings** describing what each
-layer stores.
+layer stores. This method is crucial because providers usually refer to layers
+as codes or integer, and we want users to be able to figure out which layer is
+which without having to get back to the actual provider website.
+
+The third step in defining a dataset provider is to overload, for each
+`LayerProvider` and `LayerDataset`, the `_rasterpath` method; this method is
+responsible for creating a path where the layers themselves (and when
+applicable, the relevant zip/tar files) will be stored, relative to the root of
+the data storage folder. Note that by default, there is a method that takes two
+arguments (the provider and the dataset) and returns the joined paths of each;
+you can overload this two-argument methods if you want the same dataset to be
+stored in differently named folders for each provider. Note also that the
+two-method argument does not exists for scenarios (for the moment). Note finally
+that these functions do not allow *users* to determine where the layers will be
+stored, as they are meant to access them using overloads of `SimpleSDMPredictor`
+anyways.
