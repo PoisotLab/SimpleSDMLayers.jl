@@ -9,7 +9,7 @@ coords = (left = -145.0, right = -50.0, bottom = 20.0, top = 75.0)
 l1 = clip(temp; coords...)
 l2 = SimpleSDMPredictor(WorldClim, BioClim, 1; coords...)
 tempfile = tempname()
-geotiff(tempfile, l2)
+SimpleSDMLayers.geotiff(tempfile, l2)
 l3 = geotiff(SimpleSDMPredictor, tempfile)
 
 @test size(l1) == size(l2)
