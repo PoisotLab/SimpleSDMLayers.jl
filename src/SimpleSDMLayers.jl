@@ -68,7 +68,7 @@ for s in instances(CMIP6)
 end
 for s in instances(RepresentativeConcentrationPathway)
     @eval export $(Symbol(s))
-end 
+end
 for s in instances(SharedSocioeconomicPathway)
     @eval export $(Symbol(s))
 end
@@ -86,11 +86,12 @@ include(joinpath("datasets", "providers", "worldclim", "core.jl"))
 include(joinpath("datasets", "providers", "worldclim", "download.jl"))
 include(joinpath("datasets", "providers", "worldclim", "userfacing.jl"))
 
-#include(joinpath("datasets", "earthenv", "download.jl"))
-#include(joinpath("datasets", "earthenv", "landcover.jl"))
-#include(joinpath("datasets", "earthenv", "habitatheterogeneity.jl"))
-#include(joinpath("datasets", "earthenv", "topography.jl"))
+# Data interface for EarthEnv
+include(joinpath("datasets", "providers", "earthenv", "core.jl"))
+include(joinpath("datasets", "providers", "earthenv", "download.jl"))
+include(joinpath("datasets", "providers", "earthenv", "userfacing.jl"))
 
+# Pseudoabsences generation
 include(joinpath("pseudoabsences", "main.jl"))
 include(joinpath("pseudoabsences", "radius.jl"))
 include(joinpath("pseudoabsences", "randomselection.jl"))
@@ -111,7 +112,7 @@ export bivariate
 export clip
 
 function __init__()
-    @require GBIF="ee291a33-5a6c-5552-a3c8-0f29a1181037" begin
+    @require GBIF = "ee291a33-5a6c-5552-a3c8-0f29a1181037" begin
         @info "Loading GBIF support for SimpleSDMLayers.jl"
         include("integrations/GBIF.jl")
     end
