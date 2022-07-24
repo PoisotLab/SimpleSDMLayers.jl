@@ -1,4 +1,3 @@
-layernames(::Type{CHELSA}, ::Type{BioClim}) = layernames(WorldClim, BioClim)
 
 
 function layernames(::Type{TerraClimate}, ::Type{PrimaryClimateVariable})

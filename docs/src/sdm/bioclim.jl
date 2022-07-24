@@ -1,6 +1,6 @@
 # # Building the BIOCLIM model
 
-# **Justification for this use case:** `SImpleSDMLayers` can be used as a
+# **Justification for this use case:** `SimpleSDMLayers` can be used as a
 # platform to build your own species distribution models. In this example, which
 # assumes that you have read the vignettes on GBIF integration and variable
 # selection through VIF, we will build our own version of the BIOCLIM model, and

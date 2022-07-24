@@ -9,6 +9,9 @@ _rasterpath(::Type{EarthEnv}, ::Type{LandCover}) = joinpath(_rasterpath(WorldCli
 _rasterpath(::Type{EarthEnv}, ::Type{HabitatHeterogeneity}) = joinpath(_rasterpath(WorldClim), "HabitatHeterogeneity")
 _rasterpath(::Type{EarthEnv}, ::Type{Topography}) = joinpath(_rasterpath(WorldClim), "Topography")
 
+# How to read these data?
+_readfunction(::Type{EarthEnv}, ::Type{<:LayerDataset}) = SimpleSDMLayers.geotiff
+
 # Layer names
 function layernames(::Type{EarthEnv}, ::Type{HabitatHeterogeneity})
     return (

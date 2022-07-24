@@ -91,6 +91,11 @@ include(joinpath("datasets", "providers", "earthenv", "core.jl"))
 include(joinpath("datasets", "providers", "earthenv", "download.jl"))
 include(joinpath("datasets", "providers", "earthenv", "userfacing.jl"))
 
+# Data interface for CHELSA
+include(joinpath("datasets", "providers", "chelsa", "core.jl"))
+include(joinpath("datasets", "providers", "chelsa", "download.jl"))
+include(joinpath("datasets", "providers", "chelsa", "userfacing.jl"))
+
 # Pseudoabsences generation
 include(joinpath("pseudoabsences", "main.jl"))
 include(joinpath("pseudoabsences", "radius.jl"))
