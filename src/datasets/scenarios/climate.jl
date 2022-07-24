@@ -22,7 +22,7 @@ Enumeration of the four RCPs, which can be listed with
 Enumeration of the models from CMIP6, which can be listed with
 `instances(CMIP6)`.
 """
-@enum CMIP6 BCCCSM2MR CNRMCMS61 CNRMESM21 CanESM5 GFDLESM4 IPSLCM6ALR MIROCES2L MIROC6 MRIESM2
+@enum CMIP6 BCCCSM2MR CNRMCMS61 CNRMESM21 CanESM5 GFDLESM4 IPSLCM6ALR MIROCES2L MIROC6 MRIESM2 UKESM10LL MPIESM12HR
 
 """
     CMIP5
@@ -60,6 +60,8 @@ _rasterpath(::Type{Val{IPSLCM6ALR}}) = "IPSL-CM6A-LR"
 _rasterpath(::Type{Val{MIROCES2L}}) = "MIROC-ES2L"
 _rasterpath(::Type{Val{MIROC6}}) = "MIROC6"
 _rasterpath(::Type{Val{MRIESM2}}) = "MRI-ESM2-0"
+_rasterpath(::Type{Val{UKESM10LL}}) = "UKESM1-0-LL"
+_rasterpath(::Type{Val{MPIESM12HR}}) = "MPI-ESM1-2-HR"
 
 # CMIP5 path
 _rasterpath(::Type{Val{ACCESS10}}) = "ACCESS1-0"
