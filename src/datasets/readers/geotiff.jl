@@ -33,10 +33,10 @@ function geotiff(
     ::Type{LT},
     file::AbstractString,
     bandnumber::Integer=1;
-    left = -180.0,
-    right = 180.0,
-    bottom = -90.0,
-    top = 90.0
+    left=-180.0,
+    right=180.0,
+    bottom=-90.0,
+    top=90.0
 ) where {LT<:SimpleSDMLayer}
 
     # This next block is reading the geotiff file, but also making sure that we
@@ -52,15 +52,12 @@ function geotiff(
         # band, but this is not the case for the future WorldClim data.
         band = ArchGDAL.getband(dataset, bandnumber)
         T = ArchGDAL.pixeltype(band)
-        
-        # The nodata is not always correclty identified, so if it is not found, we assumed it is the smallest value in the band
-        nodata = isnothing(ArchGDAL.getnodatavalue(band)) ? convert(T, ArchGDAL.minimum(band)) : convert(T, ArchGDAL.getnodatavalue(band))
 
         # Get the correct latitudes
         minlon = transform[1]
         maxlat = transform[4]
-        maxlon = minlon + size(band,1)*transform[2]
-        minlat = maxlat - abs(size(band,2)*transform[6])
+        maxlon = minlon + size(band, 1) * transform[2]
+        minlat = maxlat - abs(size(band, 2) * transform[6])
 
         left = isnothing(left) ? minlon : max(left, minlon)
         right = isnothing(right) ? maxlon : min(right, maxlon)
@@ -68,7 +65,7 @@ function geotiff(
         top = isnothing(top) ? maxlat : min(top, maxlat)
 
         lon_stride, lat_stride = transform[2], transform[6]
-        
+
         width = ArchGDAL.width(dataset)
         height = ArchGDAL.height(dataset)
 
@@ -83,12 +80,23 @@ function geotiff(
 
         max_height, min_height = height .- (min_height, max_height) .+ 1
 
+        # The nodata is not always correctly identified, so if it is not found,
+        # we assumed it is the smallest value in the band. In addition, some
+        # data providers have the brilliant idea to return values in UInt16 and
+        # no data as negative values, which are definitely not unsigned. So
+        # there's a little bit of additional trickery required. Thanks, CHELSA
+        # V2.
+        _band_nodata = ArchGDAL.getnodatavalue(band)
+        #nodata = isnothing(_band_nodata) ? convert(T, ArchGDAL.minimum(band)) : convert(T, ArchGDAL.getnodatavalue(band))
+        nodata = isnothing(_band_nodata) ? minimum(band) : _band_nodata
+
         # We are now ready to initialize a matrix of the correct type.
         buffer = Matrix{T}(undef, length(min_width:max_width), length(min_height:max_height))
         ArchGDAL.read!(dataset, buffer, bandnumber, min_height:max_height, min_width:max_width)
-        buffer = convert(Matrix{Union{Nothing,eltype(buffer)}}, rotl90(buffer))
+        buffer = convert(Matrix{Union{Nothing,T}}, rotl90(buffer))
         replace!(buffer, nodata => nothing)
-        LT(buffer, left_pos-0.5lon_stride, right_pos+0.5lon_stride, bottom_pos-0.5lat_stride, top_pos+0.5lat_stride)
+
+        LT(buffer, left_pos - 0.5lon_stride, right_pos + 0.5lon_stride, bottom_pos - 0.5lat_stride, top_pos + 0.5lat_stride)
     end
 
     return layer
