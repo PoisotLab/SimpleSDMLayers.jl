@@ -62,3 +62,11 @@ argument, and a series of keywords and/or scenarios for *e.g.* climate change.
 Because of the volume of data, these functions should almost always start by
 checking whether the file exists, and only download what is required. These
 functions must return a path to the layer to import.
+
+**TODO** constructor overload, note the deprecation of only returning a SINGLE layer
+
+Note finally that the suggested way to implement the interface is to have a
+`datasets/providers` folder, which contains three files: `core.jl` (eveything
+that is not `_get_raster`), `download.jl` (the methods to actually download the
+layers), and `userfacing.jl` (the `SimpleSDMPredictor` constructors). Again, see
+the implementation for WordClim as a reference.

@@ -81,10 +81,10 @@ export layernames
 
 #include(joinpath("datasets", "terraclimate", "download.jl"))
 
+# Data interface for WorldClim
 include(joinpath("datasets", "providers", "worldclim", "core.jl"))
 include(joinpath("datasets", "providers", "worldclim", "download.jl"))
-include(joinpath("datasets", "providers", "worldclim", "elevation.jl"))
-include(joinpath("datasets", "providers", "worldclim", "bioclim.jl"))
+include(joinpath("datasets", "providers", "worldclim", "userfacing.jl"))
 
 #include(joinpath("datasets", "earthenv", "download.jl"))
 #include(joinpath("datasets", "earthenv", "landcover.jl"))

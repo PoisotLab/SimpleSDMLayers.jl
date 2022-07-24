@@ -41,9 +41,3 @@ layernames(p::Type{<:LayerProvider}, d::Type{<:LayerDataset}, i::AbstractArray) 
 
 # Default function to read a layer is geotiff
 _readfunction(::Type{<:LayerProvider}, ::Type{<:LayerDataset}) = SimpleSDMLayers.geotiff
-
-# Generic function to access things
-function SimpleSDMPredictor(p::Type{<:LayerProvider}, d::Type{<:LayerDataset}, pos...; kwargs...)
-    @assert SimpleSDMLayers.provides(p, d)
-    return _readfunction(p, d)(_get_data(p, d, pos...; kwargs...))
-end

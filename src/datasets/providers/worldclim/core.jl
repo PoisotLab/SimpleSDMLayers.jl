@@ -7,6 +7,10 @@ _rasterpath(::Type{WorldClim}) = "WorldClim"
 _rasterpath(::Type{WorldClim}, ::Type{BioClim}) = joinpath(_rasterpath(WorldClim), "BioClim")
 _rasterpath(::Type{WorldClim}, ::Type{Elevation}) = joinpath(_rasterpath(WorldClim), "Elevation")
 
+# How to read these data?
+_readfunction(::Type{WorldClim}, ::Type{BioClim}) = SimpleSDMLayers.geotiff
+_readfunction(::Type{WorldClim}, ::Type{Elevation}) = SimpleSDMLayers.geotiff
+
 # Names for the layers in each dataset
 function layernames(::Type{WorldClim}, ::Type{BioClim})
     return (

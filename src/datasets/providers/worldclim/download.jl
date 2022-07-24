@@ -1,6 +1,7 @@
 function _get_raster(::Type{WorldClim}, ::Type{Elevation}, layer::Integer, resolution=10.0)
+    @assert resolution in [0.5, 2.5, 5.0, 10.0]
     res = Dict(0.5 => "30s", 2.5 => "2.5m", 5.0 => "5m", 10.0 => "10m")
-    
+
     path = joinpath(SimpleSDMLayers._layers_assets_path, _rasterpath(WorldClim), _rasterpath(Elevation), res[resolution])
     isdir(path) || mkpath(path)
 
@@ -28,6 +29,8 @@ end
 
 function _get_raster(::Type{WorldClim}, ::Type{BioClim}, layer::Integer, resolution=10.0)
     1 ≤ layer ≤ 19 || throw(ArgumentError("The layer must be between 1 and 19"))
+
+    @assert resolution in [0.5, 2.5, 5.0, 10.0]
 
     res = Dict(0.5 => "30s", 2.5 => "2.5m", 5.0 => "5m", 10.0 => "10m")
 
@@ -57,6 +60,8 @@ function _get_raster(::Type{WorldClim}, ::Type{BioClim}, layer::Integer, resolut
 end
 
 function _get_raster(::Type{WorldClim}, ::Type{BioClim}, mod::CMIP6, fut::SharedSocioeconomicPathway, resolution=10.0, year="2021-2040")
+    @assert year in ["2021-2040", "2041-2060", "2061-2080", "2081-2100"]
+    @assert resolution in [2.5, 5.0, 10.0]
     res = Dict(2.5 => "2.5m", 5.0 => "5m", 10.0 => "10m")
 
     path = joinpath(SimpleSDMLayers._layers_assets_path, _rasterpath(WorldClim), _rasterpath(BioClim), _rasterpath(mod), _rasterpath(fut), year, res[resolution])
