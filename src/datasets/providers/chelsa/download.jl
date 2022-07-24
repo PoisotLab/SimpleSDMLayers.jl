@@ -15,8 +15,6 @@ function _get_raster(::Type{CHELSA}, ::Type{BioClim}, layer::Integer)
     return filepath
 end
 
-CHELSA_ai_1981-2010_V.2.1.tif
-
 function _get_raster(::Type{CHELSA}, ::Type{BioClim}, mod::CMIP6, fut::SharedSocioeconomicPathway, layer::Integer, year="2011-2040")
     @assert mod in [GFDLESM4, IPSLCSM6ALR, MPIESM12HR, MRIESM20, UKESM10LL]
     1 ≤ layer ≤ 19 || throw(ArgumentError("The layer must be between 1 and 19"))

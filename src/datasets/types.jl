@@ -103,9 +103,6 @@ Information on habitat topography, currently provided by `EarthEnv`.
 struct Topography <: LayerDataset end
 
 # Provider paths
-_rasterpath(::Type{WorldClim}) = "WorldClim"
-_rasterpath(::Type{CHELSA}) = "CHELSA"
-_rasterpath(::Type{EarthEnv}) = "EarthEnv"
 _rasterpath(::Type{TerraClimate}) = "TerraClimate"
 
 # Dataset paths
