@@ -4,7 +4,7 @@ using Test
 using Plots
 using StatsPlots
 
-temperature, precipitation = SimpleSDMPredictor(WorldClim, BioClim, [1,12])
+temperature, precipitation = [SimpleSDMPredictor(WorldClim, BioClim, i) for i in [1,12]]
 
 ispath("gallery") || mkpath("gallery")
 
