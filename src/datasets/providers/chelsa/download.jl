@@ -4,9 +4,8 @@ function _get_raster(::Type{CHELSA}, ::Type{BioClim}, layer::Integer)
     path = joinpath(SimpleSDMLayers._layers_assets_path, _rasterpath(CHELSA), _rasterpath(BioClim))
     isdir(path) || mkpath(path)
 
-    layer = lpad(layer, 2, "0")
-    filename = "CHELSA_bio10_$(layer)_1981-2010_V2.1.tif"
     url_root = "https://os.zhdk.cloud.switch.ch/envicloud/chelsa/chelsa_V2/GLOBAL/climatologies/1981-2010/bio/"
+    filename = "CHELSA_bio$(layer)_1981-2010_V.2.1.tif"
 
     filepath = joinpath(path, filename)
     if !(isfile(filepath))
