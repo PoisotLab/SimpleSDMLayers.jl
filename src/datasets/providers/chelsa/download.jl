@@ -33,7 +33,7 @@ function _get_raster(::Type{CHELSA}, ::Type{BioClim}, mod::CMIP5, fut::Represent
     return filepath
 end
 
-function _get_raster(::Type{CHELSA}, ::Type{BioClim}, mod::CMIP6, fut::SharedSocioeconomicPathway, layer::Integer, year="2041-2060")
+function _get_raster(::Type{CHELSA}, ::Type{BioClim}, mod::CMIP6, fut::SharedSocioeconomicPathway, layer::Integer, year="2011-2040")
     1 ≤ layer ≤ 19 || throw(ArgumentError("The layer must be between 1 and 19"))
     year in ["2011-2040", "2041-2070", "2071-2100"] || throw(ArgumentError("The year must be 2011-2040, 2041-2070, or 2071-2100"))
 

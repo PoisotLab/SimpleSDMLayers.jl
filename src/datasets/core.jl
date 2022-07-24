@@ -32,6 +32,15 @@ function provides(::Type{<:LayerProvider}, ::Type{<:LayerDataset})
     return false
 end
 
+"""
+    provides()
+
+Returns the list of datasets provided by each know data provider.
+"""
+function provides()
+
+end
+
 function layernames(::Type{<:LayerProvider}, ::Type{<:LayerDataset})
     return ()
 end
