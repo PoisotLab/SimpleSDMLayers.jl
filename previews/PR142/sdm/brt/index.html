@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>BRTs and climate change · Simple SDM Layers</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Simple SDM Layers logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">Simple SDM Layers</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="../../man/types/">Types</a></li><li><a class="tocitem" href="../../man/indexing/">Indexing</a></li><li><a class="tocitem" href="../../man/clip/">Clipping</a></li><li><a class="tocitem" href="../../man/changevalues/">Operations on values</a></li><li><a class="tocitem" href="../../man/overloads/">Overloads</a></li><li><a class="tocitem" href="../../man/operations/">Other operations</a></li><li><a class="tocitem" href="../../man/data/">Data access</a></li><li><a class="tocitem" href="../../man/io/">IO</a></li></ul></li><li><span class="tocitem">General examples</span><ul><li><a class="tocitem" href="../../examples/elevation/">Introduction: elevation data</a></li><li><a class="tocitem" href="../../examples/geometry/">Geometry for clipping</a></li><li><a class="tocitem" href="../../examples/slidingwindow/">Sliding window analysis</a></li><li><a class="tocitem" href="../../examples/landcover/">Landcover data</a></li><li><a class="tocitem" href="../../examples/multivariate/">Multivariate mapping</a></li></ul></li><li><span class="tocitem">SDM case studies</span><ul><li><a class="tocitem" href="../gbif/">GBIF integration</a></li><li><a class="tocitem" href="../vif/">Variable selection (VIF)</a></li><li><a class="tocitem" href="../bioclim/">Building the BIOCLIM model</a></li><li><a class="tocitem" href="../pseudoabsences/">Pseudo-absences</a></li><li><a class="tocitem" href="../future/">Dealing with future data</a></li><li class="is-active"><a class="tocitem" href>BRTs and climate change</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">SDM case studies</a></li><li class="is-active"><a href>BRTs and climate change</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>BRTs and climate change</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/EcoJulia/SimpleSDMLayers.jl/docs/src/sdm/brt.jl" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="BRTs-for-species-distribution-forecasting"><a class="docs-heading-anchor" href="#BRTs-for-species-distribution-forecasting">BRTs for species distribution forecasting</a><a id="BRTs-for-species-distribution-forecasting-1"></a><a class="docs-heading-anchor-permalink" href="#BRTs-for-species-distribution-forecasting" title="Permalink"></a></h1><pre><code class="language-julia hljs">using SimpleSDMLayers
+using EvoTrees
+using GBIF
+using StatsBase
+using StatsPlots</code></pre><p><strong>Justification for this use case:</strong> Boosted Regression Trees (BRTs) are a powerful way to predict the distribution of species. We will see how we can get information in and out of layers to use them, and how to use this model to predict a new distribution under a climate change scenario. This use-case assumes that you have read the manual pages for GBIF integration, future data, and pseudo-absences generation.</p><p>We will re-use the data from the pseudo-absences example:</p><pre><code class="language-julia hljs">sp = GBIF.taxon(&quot;Hypomyces lactifluorum&quot;)
+observations = occurrences(
+    sp, &quot;hasCoordinate&quot; =&gt; true, &quot;limit&quot; =&gt; 300, &quot;country&quot; =&gt; &quot;CA&quot;, &quot;country&quot; =&gt; &quot;US&quot;
+)
+while length(observations) &lt; size(observations)
+    occurrences!(observations)
+end</code></pre><p>We will pick the entire BioClim layers at a 10 minutes resolution, and clip them to the observations (this adds a 5 degrees buffer).</p><pre><code class="language- hljs">layers = [
+    clip(layer, observations) for layer in SimpleSDMPredictor(WorldClim, BioClim, 1:19)
+];
+nothing #hide</code></pre><p>To remove the sampling effect, we transform the presences to a grid, and generate pseudo-absences using the surface range envelope method.</p><pre><code class="language- hljs">presences = mask(layers[1], observations, Bool)
+absences = rand(SurfaceRangeEnvelope, presences)</code></pre><p>The next step is to extract coordinates at which the species is present or pseudo-absent - we can rely on the <code>replace</code> method to empty any <code>false</code> values:</p><pre><code class="language- hljs">xy_presence = keys(replace(presences, false =&gt; nothing));
+xy_absence = keys(replace(absences, false =&gt; nothing));
+xy = vcat(xy_presence, xy_absence);
+nothing #hide</code></pre><p>With the <code>xy</code> list of coordinates, we can get a predictor <code>X</code>, and a response <code>y</code>.</p><pre><code class="language- hljs">X = hcat([layer[xy] for layer in layers]...);
+y = vcat(fill(1.0, length(xy_presence)), fill(0.0, length(xy_absence)));
+nothing #hide</code></pre><p>To train the model, we will use a random subset representing 70% of the dataset:</p><pre><code class="language- hljs">train_size = floor(Int, 0.7 * length(y));
+train_idx = sample(1:length(y), train_size; replace=false);
+test_idx = setdiff(1:length(y), train_idx);
+nothing #hide</code></pre><p>This gives use the training and testing (or evaluation) sets:</p><pre><code class="language- hljs">Xtrain, Xtest = X[train_idx, :], X[test_idx, :];
+Ytrain, Ytest = y[train_idx], y[test_idx];
+nothing #hide</code></pre><p>In order to fit the tree, we need to define a number of parameters. We will use a Gaussian maximum likelihood tree (from <code>EvoTrees</code>), which will give us a measure of the average prediction, but also the standard deviation. This is important in order to communicate uncertainty.</p><pre><code class="language- hljs">gaussian_tree_parameters = EvoTreeGaussian(;
+    loss=:gaussian,
+    metric=:gaussian,
+    nrounds=100,
+    nbins=100,
+    λ=0.0,
+    γ=0.0,
+    η=0.1,
+    max_depth=7,
+    min_weight=1.0,
+    rowsample=0.5,
+    colsample=1.0,
+)</code></pre><p>We can now fit the BRT. This function has an additional <code>print_every_n</code> to update on the progress every <code>n</code> epochs, but we don&#39;t really need it here.</p><pre><code class="language- hljs">model = fit_evotree(gaussian_tree_parameters, Xtrain, Ytrain; X_eval=Xtest, Y_eval=Ytest)</code></pre><p>The next step is to gather <em>all</em> the values of all the layers in a matrix, in order to run the full spatial prediction:</p><pre><code class="language- hljs">all_values = hcat([layer[keys(layer)] for layer in layers]...);
+nothing #hide</code></pre><p>If the matrix is too big, we could resort to a combination of <code>clip</code>, make the prediction on each tile, and then use <code>hcat</code> and <code>vcat</code> to combine them. This is not the case here, so we can predict directly:</p><pre><code class="language- hljs">pred = EvoTrees.predict(model, all_values);
+nothing #hide</code></pre><p>Once the prediction is done, we can copy the values into a layer.</p><pre><code class="language- hljs">distribution = similar(layers[1], Float64)
+distribution[keys(distribution)] = pred[:, 1]
+distribution</code></pre><p>The BRT is able to calculate a measure of relative gain from the different variables:</p><pre><code class="language- hljs">top5_var = importance(model, collect(layernames(WorldClim, BioClim)))[1:5]</code></pre><p>This is an interesting alternative to VIF for variable selection. Let&#39;s examine how the most important variable relates to the predicted distribution score:</p><pre><code class="language- hljs">most_important_layer = findfirst(isequal(top5_var[1].first), collect(layernames(WorldClim, BioClim)))
+histogram(
+    layers[most_important_layer][xy_presence]; fill=(0, :teal, 0.2), lc=:teal, frame=:origin, lab=&quot;Present&quot;
+)
+histogram!(
+    layers[most_important_layer][xy_absence]; fill=(0, :white, 0.0), frame=:origin, lc=:grey, lab=&quot;Absent&quot;
+)
+xaxis!(layernames(WorldClim, BioClim, most_important_layer))</code></pre><p>It is interesting to notice that despite the importance of this predictor, the difference between the presence and absence locations are not as clear as we may expect!</p><p>We can similarly extract uncertainty:</p><pre><code class="language- hljs">uncertainty = similar(layers[1], Float64)
+uncertainty[keys(uncertainty)] = pred[:, 2]
+uncertainty</code></pre><p>And we can now visualize the prediction, which we force to be in <code>[0,1]</code>.</p><pre><code class="language- hljs">p_dis = plot(rescale(distribution, (0, 1)); c=:bamako, frame=:box)
+scatter!(xy_presence; lab=&quot;&quot;, c=:black, alpha=0.2, msw=0.0, ms=3)</code></pre><p>We can do the same thing for the uncertainty</p><pre><code class="language- hljs">p_unc = plot(uncertainty; c=:tokyo, frame=:box)</code></pre><p>Of course, this prediction is returing values for the entire range of the initial layer, so let&#39;s compare the distributions of the prediction score:</p><pre><code class="language- hljs">histogram(
+    distribution[xy_presence]; fill=(0, :teal, 0.2), lc=:teal, frame=:origin, lab=&quot;Present&quot;
+)
+histogram!(
+    distribution[xy_absence]; fill=(0, :white, 0.0), frame=:origin, lc=:grey, lab=&quot;Absent&quot;
+)
+xaxis!(&quot;Prediction score&quot;)</code></pre><p>This looks like a good opportunity to do some thresholding. Note that the values are <em>not</em> moved back to the unit range, because we&#39;ll need the raw values for a little surprise later on. We will find the value of the score that optimizes Youden&#39;s J (Cohen&#39;s κ is also a suitable alternative):</p><pre><code class="language- hljs">cutoff = LinRange(extrema(distribution)..., 500);
+
+obs = y .&gt; 0
+
+tp = zeros(Float64, length(cutoff));
+fp = zeros(Float64, length(cutoff));
+tn = zeros(Float64, length(cutoff));
+fn = zeros(Float64, length(cutoff));
+
+for (i, c) in enumerate(cutoff)
+    prd = distribution[xy] .&gt;= c
+    tp[i] = sum(prd .&amp; obs)
+    tn[i] = sum(.!(prd) .&amp; (.!obs))
+    fp[i] = sum(prd .&amp; (.!obs))
+    fn[i] = sum(.!(prd) .&amp; obs)
+end</code></pre><p>From this, we can calculate a number of validation measures:</p><pre><code class="language- hljs">tpr = tp ./ (tp .+ fn);
+fpr = fp ./ (fp .+ tn);
+J = (tp ./ (tp .+ fn)) + (tn ./ (tn .+ fp)) .- 1.0;
+ppv = tp ./ (tp .+ fp);
+nothing #hide</code></pre><p>The ROC-AUC is an overall measure of how good the fit is:</p><pre><code class="language- hljs">dx = [reverse(fpr)[i] - reverse(fpr)[i - 1] for i in 2:length(fpr)]
+dy = [reverse(tpr)[i] + reverse(tpr)[i - 1] for i in 2:length(tpr)]
+AUC = sum(dx .* (dy ./ 2.0))</code></pre><p>We can pick the value of the cutoff that maximizes J:</p><pre><code class="language- hljs">thr_index = last(findmax(J))
+τ = cutoff[thr_index]</code></pre><p>Let&#39;s have a look at the ROC curve:</p><pre><code class="language- hljs">plot(fpr, tpr; aspectratio=1, frame=:box, lab=&quot;&quot;, dpi=600, size=(400, 400))
+scatter!([fpr[thr_index]], [tpr[thr_index]]; lab=&quot;&quot;, c=:black)
+plot!([0, 1], [0, 1]; c=:grey, ls=:dash, lab=&quot;&quot;)
+xaxis!(&quot;False positive rate&quot;, (0, 1))
+yaxis!(&quot;True positive rate&quot;, (0, 1))</code></pre><p>And the precision-recall as well:</p><pre><code class="language- hljs">plot(tpr, ppv; aspectratio=1, frame=:box, lab=&quot;&quot;, dpi=600, size=(400, 400))
+scatter!([tpr[thr_index]], [ppv[thr_index]]; lab=&quot;&quot;, c=:black)
+plot!([0, 1], [1, 0]; c=:grey, ls=:dash, lab=&quot;&quot;)
+xaxis!(&quot;True positive rate&quot;, (0, 1))
+yaxis!(&quot;Positive predictive value&quot;, (0, 1))</code></pre><p>We can now map the result using τ as a cutoff for the <code>distribution</code> data:</p><pre><code class="language- hljs">range_mask = broadcast(v -&gt; v &gt;= τ, distribution)</code></pre><p>And finally, plot the whole thing:</p><pre><code class="language- hljs">plot(distribution; c=:lightgrey, leg=false)
+plot!(mask(range_mask, distribution); c=:darkgreen)
+scatter!(xy_presence; lab=&quot;&quot;, c=:orange, alpha=0.5, msw=0.0, ms=2)</code></pre><p>Because our BRT also returns the uncertainty, we can combine both maps into a bivariate one, showing both where we expect the species, but also where we are uncertain about the prediction:</p><pre><code class="language- hljs">plot(distribution; leg=false, c=:lightgrey, frame=:grid, xlab=&quot;Longitude&quot;, ylab=&quot;Latitude&quot;, grid=false)
+bivariate!(mask(range_mask, distribution), mask(range_mask, uncertainty))
+p2 = bivariatelegend!(
+    mask(range_mask, distribution),
+    mask(range_mask, uncertainty);
+    inset=(1, bbox(0.04, 0.08, 0.23, 0.23, :center, :left)),
+    subplot=2,
+    xlab=&quot;Prediction&quot;,
+    ylab=&quot;Uncertainty&quot;,
+    guidefontsize=7,
+)</code></pre><p>Now, for the big question - will this range move in the future? To explore this, we will get the same variables, but in the future. In order to simplify the code, we will limit ourselves to one SSP (585) and one CMIP6 model (CanESM5), around 2050:</p><pre><code class="language- hljs">future_layers = [
+    clip(layer, observations) for
+    layer in SimpleSDMPredictor(WorldClim, BioClim, CanESM5, SSP585, 1:19; year=&quot;2041-2060&quot;)
+];
+nothing #hide</code></pre><p>We can get all the future values from this data:</p><pre><code class="language- hljs">all_future_values = hcat([layer[keys(layer)] for layer in future_layers]...);
+nothing #hide</code></pre><p>And make a prediction based on our BRT model. This is, of course, assuming that BRTs are good at this type of prediction (they&#39;re OK).</p><pre><code class="language- hljs">future_pred = EvoTrees.predict(model, all_future_values);
+nothing #hide</code></pre><p>As before, we also have a measure of uncertainty. In the interest of keeping this vignette small, we will not look at it.</p><pre><code class="language- hljs">future_distribution = similar(layers[1], Float64)
+future_distribution[keys(future_distribution)] = future_pred[:, 1]
+future_distribution</code></pre><p>The values in <code>future_distribution</code> are in the scale of what the BRT returns, so we can compare them with the values of <code>distribution</code>:</p><pre><code class="language- hljs">plot(future_distribution - distribution; clim=(-1, 1), c=:broc, frame=:box)</code></pre><p>This shows the area of predicted gain and loss of presence. Because we have thresholded our current distribution, we can look at the predicted ranges of suitability:</p><pre><code class="language- hljs">future_range_mask = broadcast(v -&gt; v &gt;= τ, future_distribution)</code></pre><p>The last step is to get the difference between the future and current masks (so +1 is a gain of range, 0 is no change, and -1 is a loss), and to only report this for the cells that are both in the current and future data:</p><pre><code class="language- hljs">range_change = convert(Float32, future_range_mask) - convert(Float32, range_mask)
+both_ranges_mask = maximum([future_range_mask, range_mask])</code></pre><p>We can now plot the result, with the brown area being range that becomes unfavorable, the green one remaining suitable, and the blue area being newly opened range:</p><pre><code class="language- hljs">plot(distribution; c=:lightgrey, leg=false)
+plot!(mask(both_ranges_mask, range_change); c=:roma)</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../future/">« Dealing with future data</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.22 on <span class="colophon-date" title="Sunday 24 July 2022 15:35">Sunday 24 July 2022</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
