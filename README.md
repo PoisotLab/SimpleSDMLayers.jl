@@ -1,6 +1,6 @@
 ## Simple Layers for Species Distributions Modelling
 
-***MAINTENANCE MODE*** - this repo is being move to a monorepo with better integration between features
+***MAINTENANCE MODE*** - this repo is being moved to [a monorepo with better integration between features](https://github.com/PoisotLab/SpeciesDistributionToolkit.jl)
 
 **What is this package**? `SimpleSDMLayers` offers a series of types, methods,
 and additional helper functions to build species distribution models. It does
